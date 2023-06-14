@@ -21,7 +21,7 @@ class RNN:
         self.bh = np.zeros((1, self.hidden_nodes)) #the bias for the hidden layers
         self.by = np.zeros((1, self.output_nodes)) #the bias for the output layer
     
-    def _forward(self, X : np.ndarray):
+    def forward(self, X : np.ndarray):
         #perform the forward propagation step through the RNN
         self.h = np.zeros((X.shape[0], self.hidden_nodes)) #the hidden state
         self.h_prev = np.zeros((X.shape[0], self.hidden_nodes)) #the previous hidden state
@@ -34,6 +34,5 @@ class RNN:
             self.h = np.tanh(np.dot(X[:,t,:], self.Wxh) + np.dot(self.h_prev, self.Whh) + self.bh)
             self.y = np.dot(self.h, self.Why) + self.by
             self.p = utils.softmax(self.y)
-            self.loss += -np.sum(np.log(self.p[np.arange(len(X)), :, X[:,t,0]]))
-        return self.loss, self.p, self.h
+        return self.p, self.h
 
