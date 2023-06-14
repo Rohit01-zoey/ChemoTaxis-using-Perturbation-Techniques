@@ -1,5 +1,5 @@
 import numpy as np
-from utils import softmax
+from metrics import utils
 
 class RNN:
     def __init__(self, input_nodes : int, hidden_nodes : int, output_nodes : int, seed = 42):
@@ -33,11 +33,7 @@ class RNN:
             self.h_prev = self.h
             self.h = np.tanh(np.dot(X[:,t,:], self.Wxh) + np.dot(self.h_prev, self.Whh) + self.bh)
             self.y = np.dot(self.h, self.Why) + self.by
-            self.p = softmax(self.y)
+            self.p = utils.softmax(self.y)
             self.loss += -np.sum(np.log(self.p[np.arange(len(X)), :, X[:,t,0]]))
         return self.loss, self.p, self.h
 
-
-Rnnclass = RNN()
-Rnnclass._intialize()
-print(RNN._forward(1, 2))
