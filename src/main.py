@@ -1,8 +1,28 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from models import rnn_1hl
 from metrics import utils
+from data import sine_wave
+import config
+import network
+import logger
 
 
-x1 = np.array([1,2,3])
-x2 = np.array([4,5,6])
-print(x1.shape, utils.mse_loss(x1, x2,batch_norm=False))
+sine = sine_wave.SineWaveLoader(1000, amplitude=1.0, frequency=1.0, phase=0.0)
+# plt.plot(sine.load_data()[0, :, 0])
+# plt.show()
+
+cfg = config.get_cfg()
+model_name = cfg['model']['name']
+input_size = cfg['model']['input_size']
+output_size = cfg['model']['output_size']
+hidden_size = cfg['model']['hidden_size']
+
+log_file = logger.Logger(cfg['log']['log_file'], cfg['log']['experiment_name'])
+
+rnn_model = rnn_1hl.RNN(input_size, hidden_size, output_size)
+rnn_model.initialize()
+
+network.train(cfg, rnn_model, sine.load_data(), logger=log_file)
+
+
