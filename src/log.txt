@@ -138,3 +138,58 @@
 2023-06-14 23:12:02,554 [INFO] Epoch: 1 | Train Loss: 6395.5483 | Val Loss: 6395.5483
 2023-06-14 23:12:06,006 [INFO] Epoch: 2 | Train Loss: 458451.9179 | Val Loss: 458451.9179
 2023-06-14 23:12:09,411 [INFO] Epoch: 3 | Train Loss: 18648.0017 | Val Loss: 18648.0017
+2023-06-14 23:22:29,584 [INFO] Experiment: rnn_1hl on sine data
+2023-06-14 23:22:32,951 [INFO] Epoch: 0 | Train Loss: 33569.4127 | Val Loss: 33569.4127
+2023-06-14 23:22:36,336 [INFO] Epoch: 1 | Train Loss: 8872.2962 | Val Loss: 8872.2962
+2023-06-14 23:22:39,617 [INFO] Epoch: 2 | Train Loss: 720592.8448 | Val Loss: 720592.8448
+2023-06-14 23:22:42,884 [INFO] Epoch: 3 | Train Loss: 159205.0591 | Val Loss: 159205.0591
+2023-06-14 23:22:46,171 [INFO] Epoch: 4 | Train Loss: 147249.4182 | Val Loss: 147249.4182
+2023-06-14 23:22:49,437 [INFO] Epoch: 5 | Train Loss: 316058.5285 | Val Loss: 316058.5285
+2023-06-14 23:22:52,754 [INFO] Epoch: 6 | Train Loss: 239604.2161 | Val Loss: 239604.2161
+2023-06-14 23:22:56,181 [INFO] Epoch: 7 | Train Loss: 4885506.3500 | Val Loss: 4885506.3500
+2023-06-14 23:22:59,739 [INFO] Epoch: 8 | Train Loss: 202401.8490 | Val Loss: 202401.8490
+2023-06-14 23:23:03,672 [INFO] Epoch: 9 | Train Loss: 252014.3109 | Val Loss: 252014.3109
+2023-06-14 23:24:16,216 [INFO] Experiment: rnn_1hl on sine data
+2023-06-14 23:24:19,528 [INFO] Epoch: 0 | Train Loss: 33569.4127 | Val Loss: 33569.4127
+2023-06-14 23:24:22,915 [INFO] Epoch: 1 | Train Loss: 8872.2962 | Val Loss: 8872.2962
+2023-06-14 23:24:26,157 [INFO] Epoch: 2 | Train Loss: 720592.8448 | Val Loss: 720592.8448
+2023-06-14 23:24:29,676 [INFO] Epoch: 3 | Train Loss: 159205.0591 | Val Loss: 159205.0591
+2023-06-14 23:24:32,867 [INFO] Epoch: 4 | Train Loss: 147249.4182 | Val Loss: 147249.4182
+2023-06-14 23:24:36,470 [INFO] Epoch: 5 | Train Loss: 316058.5285 | Val Loss: 316058.5285
+2023-06-14 23:24:39,853 [INFO] Epoch: 6 | Train Loss: 239604.2161 | Val Loss: 239604.2161
+2023-06-14 23:24:43,296 [INFO] Epoch: 7 | Train Loss: 4885506.3500 | Val Loss: 4885506.3500
+2023-06-14 23:24:46,770 [INFO] Epoch: 8 | Train Loss: 202401.8490 | Val Loss: 202401.8490
+2023-06-14 23:24:50,162 [INFO] Epoch: 9 | Train Loss: 252014.3109 | Val Loss: 252014.3109
+2023-06-14 23:25:05,706 [INFO] Experiment: rnn_1hl on sine data
+2023-06-14 23:25:06,139 [INFO] Epoch: 0 | Train Loss: 2849.1520 | Val Loss: 2849.1520
+2023-06-14 23:25:06,531 [INFO] Epoch: 1 | Train Loss: 5907.4906 | Val Loss: 5907.4906
+2023-06-14 23:25:06,863 [INFO] Epoch: 2 | Train Loss: 87247.2387 | Val Loss: 87247.2387
+2023-06-14 23:25:07,247 [INFO] Epoch: 3 | Train Loss: 11499.8410 | Val Loss: 11499.8410
+2023-06-14 23:25:07,616 [INFO] Epoch: 4 | Train Loss: 17875.9574 | Val Loss: 17875.9574
+2023-06-14 23:25:07,950 [INFO] Epoch: 5 | Train Loss: 3565.2090 | Val Loss: 3565.2090
+2023-06-14 23:25:08,283 [INFO] Epoch: 6 | Train Loss: 52912.4025 | Val Loss: 52912.4025
+2023-06-14 23:25:08,626 [INFO] Epoch: 7 | Train Loss: 848.5908 | Val Loss: 848.5908
+2023-06-14 23:25:08,976 [INFO] Epoch: 8 | Train Loss: 9558.3885 | Val Loss: 9558.3885
+2023-06-14 23:25:09,304 [INFO] Epoch: 9 | Train Loss: 8763.4640 | Val Loss: 8763.4640
+2023-06-14 23:25:23,255 [INFO] Experiment: rnn_1hl on sine data
+2023-06-14 23:25:23,617 [INFO] Epoch: 0 | Train Loss: 2849.1520 | Val Loss: 2849.1520
+2023-06-14 23:25:23,975 [INFO] Epoch: 1 | Train Loss: 5907.4906 | Val Loss: 5907.4906
+2023-06-14 23:25:24,295 [INFO] Epoch: 2 | Train Loss: 87247.2387 | Val Loss: 87247.2387
+2023-06-14 23:25:24,630 [INFO] Epoch: 3 | Train Loss: 11499.8410 | Val Loss: 11499.8410
+2023-06-14 23:25:24,970 [INFO] Epoch: 4 | Train Loss: 17875.9574 | Val Loss: 17875.9574
+2023-06-14 23:25:25,304 [INFO] Epoch: 5 | Train Loss: 3565.2090 | Val Loss: 3565.2090
+2023-06-14 23:25:25,642 [INFO] Epoch: 6 | Train Loss: 52912.4025 | Val Loss: 52912.4025
+2023-06-14 23:25:26,011 [INFO] Epoch: 7 | Train Loss: 848.5908 | Val Loss: 848.5908
+2023-06-14 23:25:26,351 [INFO] Epoch: 8 | Train Loss: 9558.3885 | Val Loss: 9558.3885
+2023-06-14 23:25:26,667 [INFO] Epoch: 9 | Train Loss: 8763.4640 | Val Loss: 8763.4640
+2023-06-14 23:26:14,268 [INFO] Experiment: rnn_1hl on sine data
+2023-06-14 23:26:14,609 [INFO] Epoch: 0 | Train Loss: 2849.1520 | Val Loss: 2849.1520
+2023-06-14 23:26:14,973 [INFO] Epoch: 1 | Train Loss: 5907.4906 | Val Loss: 5907.4906
+2023-06-14 23:26:15,324 [INFO] Epoch: 2 | Train Loss: 87247.2387 | Val Loss: 87247.2387
+2023-06-14 23:26:15,652 [INFO] Epoch: 3 | Train Loss: 11499.8410 | Val Loss: 11499.8410
+2023-06-14 23:26:15,979 [INFO] Epoch: 4 | Train Loss: 17875.9574 | Val Loss: 17875.9574
+2023-06-14 23:26:16,303 [INFO] Epoch: 5 | Train Loss: 3565.2090 | Val Loss: 3565.2090
+2023-06-14 23:26:16,637 [INFO] Epoch: 6 | Train Loss: 52912.4025 | Val Loss: 52912.4025
+2023-06-14 23:26:16,969 [INFO] Epoch: 7 | Train Loss: 848.5908 | Val Loss: 848.5908
+2023-06-14 23:26:17,335 [INFO] Epoch: 8 | Train Loss: 9558.3885 | Val Loss: 9558.3885
+2023-06-14 23:26:17,662 [INFO] Epoch: 9 | Train Loss: 8763.4640 | Val Loss: 8763.4640

@@ -8,7 +8,7 @@ import network
 import logger
 
 
-sine = sine_wave.SineWaveLoader(1000, amplitude=1.0, frequency=1.0, phase=0.0)
+sine = sine_wave.SineWaveLoader(100, amplitude=1.0, frequency=1.0, phase=0.0)
 # plt.plot(sine.load_data()[0, :, 0])
 # plt.show()
 
@@ -24,5 +24,11 @@ rnn_model = rnn_1hl.RNN(input_size, hidden_size, output_size)
 rnn_model.initialize()
 
 network.train(cfg, rnn_model, sine.load_data(), logger=log_file)
+
+plt.figure()
+plt.plot(sine.load_data()['val'][0, :, 0], 'r', label = "True")
+plt.plot(rnn_model.forward(sine.load_data()['val'])[0, :, 0], 'b', label = "Predicted")
+plt.show()
+
 
 
