@@ -1,6 +1,8 @@
 import numpy as np
 from models import rnn_1hl
+from metrics import utils
 
-Rnnclass = rnn_1hl.RNN(3, 10, 4)
-Rnnclass._intialize()
-print(Rnnclass.forward(np.random.randn(2, 3, 3)))
+
+x1 = np.array([1,2,3])
+x2 = np.array([4,5,6])
+print(x1.shape, utils.mse_loss(x1, x2,batch_norm=False))

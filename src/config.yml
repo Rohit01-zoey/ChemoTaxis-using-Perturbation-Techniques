@@ -1,3 +1,10 @@
-model_name: rnn_1hl
-epochs: 100
-learning_rate: 0.001
+model:
+  name: 'rnn_1hl'
+  input_size: 3
+  hidden_size: 10
+  output_size: 4
+training:
+  gradient_computation: 'wp'  # 'wp' or 'bptt'
+  epochs: 100
+  learning_rate: 0.001
+  seed: 42
