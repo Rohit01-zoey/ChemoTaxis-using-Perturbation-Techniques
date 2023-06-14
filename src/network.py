@@ -74,11 +74,12 @@ def get_gradients(cfg, model, data, loss):
         model_perturbed = copy.deepcopy(model) #deepcopy the model for perturbation
         gradient_dict = copy.deepcopy(get_weights(cfg, model)) #get the dictionary of the weights as placeholder for the loss
         #get the weights of the model
-        weights = get_weights(cfg, model_perturbed)
+        weights_keys = get_weights(cfg, model_perturbed).keys()
         unperturbed_weights = get_weights(cfg, model)
-        for key in weights.keys(): #generates the keys of the weight array
+        for key in weights_keys: #generates the keys of the weight array
             #perturb the weights
-            for index, _ in np.ndenumerate(weights[key]):
+            for index, _ in np.ndenumerate(unperturbed_weights[key]): #just for enumerating the indices of the weights array
+                weights = get_weights(cfg, model_perturbed) #set the model_perturbed to clean unperturbed weights
                 weights[key][index] += cfg['training']['perturbation']
                 #set the perturbed weights
                 set_weights(cfg, model_perturbed, weights)
