@@ -52,9 +52,14 @@ def mse_loss(x1, x2, batch_norm = True, axis = 0):
         if axis==0:
             assert x1.shape[0]!=0
             loss = (1.0/x1.shape[0])*np.sum(np.square(x1 - x2))
-        else:
+        elif axis==1:
             assert x1.shape[1]!=0
             loss = (1.0/x1.shape[1])*np.sum(np.square(x1 - x2))
+        elif axis==2:
+            assert x1.shape[2]!=0
+            loss = (1.0/x1.shape[2])*np.sum(np.square(x1 - x2))
+        else:
+            raise NotImplementedError
     else:
         loss = np.sum(np.square(x1 - x2))
     return loss
