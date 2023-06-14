@@ -1,0 +1,3 @@
+model_name: rnn_1hl
+epochs: 100
+learning_rate: 0.001
