@@ -79,7 +79,9 @@ def mse_loss_seq(x_true, x_pred, batch_norm = True):
     n_samples, n_timestamps, n_features = x_true.shape
 
     if batch_norm:
-        loss = (1.0/x_true.shape[0])*np.sum(np.square(x_true[:, 1:n_timestamps, :] - x_pred[:, 0:n_timestamps-1, :]))
+        #take the output of the model y clip the first and last value and the input shd clip the first two values
+        loss = (1.0/x_true.shape[0])*np.sum(np.square(x_true[:, 2:, :] - x_pred[:, 1:-1, :]))
     else:
-        loss = np.sum(np.square(x_true[:, 1:n_timestamps, :] - x_pred[:, 0:n_timestamps-1, :]))
+        loss = np.sum(np.square(x_true[:, 2:, :] - x_pred[:, 1:-1, :]))
     return loss
+
