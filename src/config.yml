@@ -5,13 +5,13 @@ model:
   output_size: 1
 training:
   gradient_computation: 'wp'  # 'wp' or 'bptt'
-  epochs: 10
+  epochs: 500
   learning_rate: 0.0001
-  seed: 42
-  perturbation: 0.01
+  seed: 12
+  perturbation: 0.001
   clip: True
-  max_clip_value: 1
-  min_clip_value: -1
+  max_clip_value: 3
+  min_clip_value: -3
 log:
   log_file: 'src\log.txt'
   experiment_name: 'rnn_1hl on sine data'

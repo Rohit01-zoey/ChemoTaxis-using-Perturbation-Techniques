@@ -1,6 +1,7 @@
 from models import rnn_1hl
 from metrics import utils
 import logger
+from optimizer import adam, rmsprop
 
 import copy
 import numpy as np
@@ -72,10 +73,9 @@ def get_gradients(cfg, model, data, loss):
     if cfg['training']['gradient_computation'] == 'wp':
         #implement weight perturbation
         model_perturbed = copy.deepcopy(model) #deepcopy the model for perturbation
-        gradient_dict = copy.deepcopy(get_weights(cfg, model)) #get the dictionary of the weights as placeholder for the loss
-        #get the weights of the model
-        weights_keys = get_weights(cfg, model_perturbed).keys()
-        unperturbed_weights = get_weights(cfg, model)
+        weights_keys = get_weights(cfg, model).keys() #get the keys of the weights
+        unperturbed_weights = get_weights(cfg, model) #get the weights of the model
+        gradient_dict = copy.deepcopy(get_weights(cfg, model)) #get the dictionary of the weights as placeholder for the loss/gradient
         for key in weights_keys: #generates the keys of the weight array
             #perturb the weights
             for index, _ in np.ndenumerate(unperturbed_weights[key]): #just for enumerating the indices of the weights array
@@ -83,6 +83,7 @@ def get_gradients(cfg, model, data, loss):
                 weights[key][index] += cfg['training']['perturbation']
                 #set the perturbed weights
                 set_weights(cfg, model_perturbed, weights)
+                #n print(key, index, np.sum(get_weights(cfg, model_perturbed)[key] - unperturbed_weights[key]))
                 #perform the forward propagation step
                 y_perturbed = model_perturbed.forward(data)
                 #compute the loss
@@ -90,8 +91,12 @@ def get_gradients(cfg, model, data, loss):
                 #compute the gradient
                 gradient_dict[key][index] = (loss_perturbed - loss) / cfg['training']['perturbation']
                 #after the gradient is computed, reset the weights to the original weights
-                set_weights(cfg, model_perturbed, unperturbed_weights)
+                # set_weights(cfg, model_perturbed, unperturbed_weights)
+                del model_perturbed #delete the model_perturbed to free up memory
+                model_perturbed = copy.deepcopy(model) #deepcopy the model for perturbation
+                # print(key, index, np.sum(get_weights(cfg, model_perturbed)[key] - unperturbed_weights[key]))
         return gradient_dict
+    
     elif cfg['training']['gradient_computation'] == 'bptt':
         #implement backpropagation through time
         pass
@@ -143,6 +148,7 @@ def train(cfg, model, data, logger):
     epochs = cfg['training']['epochs']
     learning_rate = cfg['training']['learning_rate']
     # gradient_computation = cfg['training']['gradient_computation']
+    optim = adam.Adam(lr=learning_rate)
     for iter in range(epochs):
         #perform the forward propagation step
         output = model.forward(data['train'])
@@ -156,6 +162,8 @@ def train(cfg, model, data, logger):
         weight_updates = get_weight_updates(cfg, gradients, learning_rate)
         #update the weights
         update_model_weights(cfg, model, weight_updates)
+        # params = optim.update(get_weights(cfg, model), weight_updates)
+        # set_weights(cfg, model, params)
         #log the mse_loss and store it in a file
         logger.log_epoch(iter, train_loss, val_loss)
         #print the loss
