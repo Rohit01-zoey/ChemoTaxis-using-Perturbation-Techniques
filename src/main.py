@@ -7,6 +7,7 @@ import config
 import network
 import logger
 from optimizer import adam, rmsprop
+from modules import fsm
 
 
 sine = sine_wave.SineWaveLoader(60, 100, amplitude=10.0, frequency=1.0, phase=0.0)
@@ -38,5 +39,9 @@ plt.legend()
 plt.show()
 
 
+fsm_model = fsm.FSM(rnn_model)
+fsm_model(np.random.rand(1, 1, 1), time = 100)
 
-
+plt.figure()
+plt.plot([fsm_model.generated_sequence[0, i, 0] for i in range(fsm_model.time)], 'r', label = "gen")
+plt.show()

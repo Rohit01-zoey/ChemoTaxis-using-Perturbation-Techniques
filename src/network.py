@@ -87,7 +87,7 @@ def get_gradients(cfg, model, data, loss):
                 #perform the forward propagation step
                 y_perturbed = model_perturbed.forward(data)
                 #compute the loss
-                loss_perturbed = utils.mse_loss(y_perturbed, data, batch_norm=True, axis= 0)
+                loss_perturbed = utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
                 #compute the gradient
                 gradient_dict[key][index] = (loss_perturbed - loss) / cfg['training']['perturbation']
                 #after the gradient is computed, reset the weights to the original weights
@@ -154,8 +154,8 @@ def train(cfg, model, data, logger):
         output = model.forward(data['train'])
         output_val = model.forward(data['val'])
         #perform the gradient computation step to compute the training loss and validation loss
-        train_loss = utils.mse_loss(output, data['train'], batch_norm=True, axis= 0)
-        val_loss = utils.mse_loss(output_val, data['val'], batch_norm=True, axis= 0)
+        train_loss = utils.mse_loss_seq(output, data['train'], batch_norm=True)
+        val_loss = utils.mse_loss_seq(output_val, data['val'], batch_norm=True)
         #compute the gradients
         gradients = get_gradients(cfg, model, data['train'], train_loss)
         #get the actual updates from the gradients
