@@ -134,6 +134,11 @@ def get_weight_updates(cfg, gradients, learning_rate):
             return {'Wxh' : -learning_rate * gradients['Wxh'], 'Whh' : -learning_rate * gradients['Whh'], 'Why' : -learning_rate * gradients['Why'], 'bh' : -learning_rate * gradients['bh'], 'by' : -learning_rate * gradients['by']}
         else:
             raise NotImplementedError
+
+    # weight_updates = copy.deepcopy(gradients)
+    # for key in gradients.keys():
+    #     weight_updates[key] = -learning_rate * gradients[key]
+    # return weight_updates
     
 
 def train(cfg, model, data, logger):
