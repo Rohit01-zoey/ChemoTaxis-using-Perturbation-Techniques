@@ -25,10 +25,11 @@ class SineWaveLoader:
 
     def load_data(self):
         sine_data = np.zeros((self.n_samples, self.time_stamps, 1))
+        self.data = {}
         index = 0
         for phase in self.phase:
             timestamps = np.linspace(0, 1, self.time_stamps)
-            sine_wave = self.amplitude * np.sin(2 * np.pi * self.frequency * timestamps + phase)
+            sine_wave = self.amplitude * np.sin(0.5 * np.pi * self.frequency * timestamps + phase)
             sine_wave = sine_wave.reshape((1, self.time_stamps, 1))
             sine_data[index] = sine_wave
             index += 1 # updating the index to append to data array
@@ -37,16 +38,36 @@ class SineWaveLoader:
         val_data = sine_data[random_perm[int(0.6 * self.n_samples) : int(0.8 * self.n_samples)], :, :]
         test_data = sine_data[random_perm[int(0.8 * self.n_samples) :], :, :]
         sine_data_dict = {'train' : train_data, 'val' : val_data, 'test' : test_data}
-        return sine_data_dict
+        self.data["data"] = sine_data_dict #appending the data to the class
+        # return sine_data_dict
     
     def add_noise(self, noise_level):
-        sine_wave = self.load_data()['train']
-        new_shape = sine_wave.shape
-        new_shape = (self.n_samples, new_shape[1], new_shape[2])
-        noise = np.random.normal(0, noise_level, new_shape)
-        sine_wave = sine_wave + noise
-        sine_wave_dict = {'train' : sine_wave, 'val' : sine_wave, 'test' : sine_wave}
-        return sine_wave_dict
+        """Augments the sine wave with noise.
+
+        Args:
+            noise_level (float): The standard deviation of the noise.
+
+        Returns:
+            dict: Returns the dictionary of sine waves with noise added/augmented.
+        """
+        self.augmentation_level = noise_level
+        if bool(self.data): # checks that the data is not empty
+            self.data['aug'] = {} # dictionary to store the augmented data
+            noise = np.random.normal(0, noise_level, (self.n_samples, self.time_stamps, 1))
+            noise_dict = {'train' : noise[:int(0.6 * self.n_samples), :, :], 'val' : noise[int(0.6 * self.n_samples) : int(0.8 * self.n_samples), :, :], 'test' : noise[int(0.8 * self.n_samples) :, :, :]}
+            for key in self.data["data"].keys():
+                self.data["aug"][key] = self.data["data"][key] + noise_dict[key]  # augmented version of the data
+        else:
+            raise ValueError("Load the data first.")
+        # return self.data["aug"]
+    
+    def get_data(self):
+        """Returns the data dictionary.
+
+        Returns:
+            dict: Dictionary of the data.
+        """
+        return self.data
 
 
 
