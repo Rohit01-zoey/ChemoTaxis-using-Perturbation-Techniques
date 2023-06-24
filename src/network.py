@@ -163,8 +163,9 @@ def train(cfg, model, data, logger):
         update_model_weights(cfg, model, weight_updates) # update the weights of the model
         # params = optim.update(get_weights(cfg, model), weight_updates)
         # set_weights(cfg, model, params)
-        fsm_model = fsm.FSM(model, state  = 'generate') # estimating the validation sequence
-        output_val = fsm_model(data['val'][:, 0:1, :], time = data['val'].shape[1])
+        #fsm_model = fsm.FSM(model, state  = 'generate') # estimating the validation sequence
+        # output_val = fsm_model(data['val'][:, 0:1, :], time = data['val'].shape[1])
+        output_val = model.forward(data['val'])
         val_loss = utils.mse_loss_seq(output_val, data['val'], batch_norm=True)
-        del fsm_model # delete the fsm model since its not required anymore
+        # del fsm_model # delete the fsm model since its not required anymore
         logger.log_epoch(iter, train_loss, val_loss) # log the mse_loss and store it in a file

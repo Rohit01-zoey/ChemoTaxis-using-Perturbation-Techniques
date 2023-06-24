@@ -5,8 +5,8 @@ model:
   output_size: 1
 training:
   gradient_computation: 'wp'  # 'wp' or 'bptt'
-  epochs: 2000
-  learning_rate: 0.0001
+  epochs: 1000
+  learning_rate: 0.0002
   seed: 12
   perturbation: 0.001
   clip: True
