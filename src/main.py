@@ -10,7 +10,7 @@ from optimizer import adam, rmsprop
 from modules import fsm
 
 
-sine = sine_wave.SineWaveLoader(n_samples=100, time_stamps=40, amplitude=2.0, frequency=5.0)
+sine = sine_wave.SineWaveLoader(n_samples=100, time_stamps=40, amplitude=2.0, frequency=10.0)
 sine.load_data() # sine_wave_dict is of the size (train, test, val) x (n_samples, n_timesteps, n_features)
 sine.add_noise(noise_level=0.03) # augment the sine wave with noise
 sine_wave_dict = sine.get_data() # get the final processed data
