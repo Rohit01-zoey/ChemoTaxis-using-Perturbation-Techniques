@@ -30,7 +30,7 @@ class FSM:
             h_prev = np.zeros((X.shape[0], self.model.hidden_nodes)) #the previous hidden state
             for t in range(1, self.time):
                 h_prev = h
-                h = np.tanh(np.dot(generated_sequence[:, -1, :], self.model.Wxh) + np.dot(h_prev, self.model.Whh) + self.model.bh)
+                h = np.tanh(np.dot(generated_sequence[:, t-1, :], self.model.Wxh) + np.dot(h_prev, self.model.Whh) + self.model.bh)
                 generated_sequence[:, t, :] = np.dot(h, self.model.Why) + self.model.by #update the output state
             
             return generated_sequence

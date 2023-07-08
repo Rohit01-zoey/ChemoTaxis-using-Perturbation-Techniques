@@ -88,7 +88,7 @@ def get_gradients(cfg, model, data, loss):
                 #perform the forward propagation step
                 y_perturbed = model_perturbed.forward(data)
                 #compute the loss
-                loss_perturbed = utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
+                loss_perturbed = utils.mse_loss_seq(y_perturbed, data[:, :, -1:], batch_norm=True)
                 #compute the gradient
                 gradient_dict[key][index] = (loss_perturbed - loss) / cfg['training']['perturbation']
                 #after the gradient is computed, reset the weights to the original weights
@@ -157,7 +157,7 @@ def train(cfg, model, data, logger):
     optim = adam.Adam(lr=learning_rate)
     for iter in range(epochs):
         output = model.forward(data['train']) # perform the forward propagation step
-        train_loss = utils.mse_loss_seq(output, data['train'], batch_norm=True)
+        train_loss = utils.mse_loss_seq(output, data['train'][:, :, -1:], batch_norm=True)
         gradients = get_gradients(cfg, model, data['train'], train_loss) # compute the gradients
         weight_updates = get_weight_updates(cfg, gradients, learning_rate) # get the actual updates from the gradients
         update_model_weights(cfg, model, weight_updates) # update the weights of the model
@@ -166,6 +166,6 @@ def train(cfg, model, data, logger):
         #fsm_model = fsm.FSM(model, state  = 'generate') # estimating the validation sequence
         # output_val = fsm_model(data['val'][:, 0:1, :], time = data['val'].shape[1])
         output_val = model.forward(data['val'])
-        val_loss = utils.mse_loss_seq(output_val, data['val'], batch_norm=True)
+        val_loss = utils.mse_loss_seq(output_val, data['val'][:, :, -1:], batch_norm=True)
         # del fsm_model # delete the fsm model since its not required anymore
         logger.log_epoch(iter, train_loss, val_loss) # log the mse_loss and store it in a file

@@ -12,7 +12,7 @@ class SineWaveLoader:
     
     SEED = 42
     
-    def __init__(self, n_samples, time_stamps, amplitude, frequency=1.0):
+    def __init__(self, n_samples, time_stamps, amplitude, frequency):
         if isinstance(amplitude, (int, float)) and isinstance(frequency, (int, float)):
             # ensure that we input the same amplitudes and frequencies for every phase
             self.n_samples = n_samples # number of samples
@@ -23,16 +23,22 @@ class SineWaveLoader:
         else:
             raise ValueError("Amplitude and frequency should be float values.")
 
-    def load_data(self):
-        sine_data = np.zeros((self.n_samples, self.time_stamps, 1))
+    def load_data(self, attention):
+        self.attention = attention # setting the attention of the data and the model
+        sine_data = np.zeros((self.n_samples, self.time_stamps+attention,1))
         self.data = {}
         index = 0
         for phase in self.phase:
-            timestamps = np.linspace(0, 1, self.time_stamps)
+            timestamps = np.linspace(0, 1, self.time_stamps+attention) # for the last sample extra attention is added
             sine_wave = self.amplitude * np.sin(0.5 * np.pi * self.frequency * timestamps + phase)
-            sine_wave = sine_wave.reshape((1, self.time_stamps, 1))
+            sine_wave = sine_wave.reshape((1, self.time_stamps+attention, 1))
             sine_data[index] = sine_wave
             index += 1 # updating the index to append to data array
+        # stacking all the correspoindig sine waves together to get required attention
+        if self.attention!=0:
+            array_to_stack =[sine_data[:, i:self.time_stamps + i, 0] for i in range(attention+1)]
+            sine_data = np.stack(array_to_stack, axis=2)
+
         random_perm = np.random.permutation(self.n_samples)
         train_data = sine_data[random_perm[:int(0.6 * self.n_samples)], :, :]
         val_data = sine_data[random_perm[int(0.6 * self.n_samples) : int(0.8 * self.n_samples)], :, :]
@@ -72,7 +78,7 @@ class SineWaveLoader:
 
 
 # sine_class = SineWaveLoader(60, 100, amplitude=10.0, frequency=10.0)
-# data = sine_class.load_data()
+# sine_class.load_data(10)
 # import matplotlib.pyplot as plt
-# plt.plot(data['train'][1, :, 0])
+# plt.plot(sine_class.data['data']['train'][1, :, :])
 # plt.show()
