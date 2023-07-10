@@ -11,7 +11,7 @@ from modules import fsm
 
 
 sine = sine_wave.SineWaveLoader(n_samples=100, time_stamps=80, amplitude=4.0, frequency=20.0)
-sine.load_data(attention = 40) # sine_wave_dict is of the size (train, test, val) x (n_samples, n_timesteps, n_features)
+sine.load_data(attention = 0) # sine_wave_dict is of the size (train, test, val) x (n_samples, n_timesteps, n_features)
 sine.add_noise(noise_level=0.03) # augment the sine wave with noise
 sine_wave_dict = sine.get_data() # get the final processed data
 plt.plot(sine_wave_dict['data']['train'][1, :, -1], 'r', label = "True sine wave")
@@ -49,10 +49,11 @@ plt.show()
 
 
 fsm_model = fsm.FSM(rnn_model)
-generated_sequence = fsm_model(sine_wave_dict['data']['test'][:, 0:1, :], time = 100)
+generated_sequence = fsm_model(sine_wave_dict['data']['test'][0:1, 0:1, :], time = 100)
 
 plt.figure()
 plt.plot(sine_wave_dict['data']['test'][0, :, -1], 'r', label = "True")
 plt.plot([generated_sequence[0, i, 0] for i in range(fsm_model.time)], 'b', label = "gen")
+plt.legend()
 plt.savefig('src\\experiment1\\output\\figures\\gen_seq_with_input_first_point.png')
 plt.show()

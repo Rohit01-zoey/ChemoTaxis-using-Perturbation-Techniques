@@ -64,14 +64,14 @@ def mse_loss(x1, x2, batch_norm = True, axis = 0):
         loss = np.sum(np.square(x1 - x2))
     return loss
 
-def mse_loss_seq(x_true, x_pred, batch_norm = True):
+def mse_loss_seq(x_pred, x_true, batch_norm = True):
     """x_true is the input sequence of the shape (n_samples, n_timestamps, n_features) and x_pred is the predicted sequence of the shape (n_samples, n_timestamps, n_features). 
     x_true = [x_true_1, x_true_2, ..., x_true_n] while x_pred = [x_pred_1, x_pred_2, ..., x_pred_n]. x_pred_1 is the estimate for x_true_2, x_pred_2 is the estimate for x_true_3 and so on. 
     The loss is computed by comparing x_true_2 with x_pred_1, x_true_3 with x_pred_2 and so on.
 
     Args:
+    x_pred (_type_): _description_
         x_true (_type_): _description_
-        x_pred (_type_): _description_
         batch_norm (bool, optional): _description_. Defaults to True.
     
     """
