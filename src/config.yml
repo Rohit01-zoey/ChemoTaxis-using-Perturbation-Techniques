@@ -13,5 +13,5 @@ training:
   max_clip_value: 3
   min_clip_value: -3
 log:
-  log_file: 'src\log.txt'
+  log_file: './src/log.txt'
   experiment_name: 'rnn_1hl on sine data'

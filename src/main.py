@@ -39,17 +39,14 @@ log_file.close() #free up the logger file
 
 plt.figure()
 plt.plot(sine_wave_dict['data']['test'][0, 2:, -1], 'r', label = "True")
-# fsm_model = fsm.FSM(rnn_model)
-#generated_sequence = fsm_model(sine_wave_dict['test'][:, 0:1, :], time = 100)
 plt.plot(rnn_model.forward(sine_wave_dict['data']['test'])[0, 1:-1, -1], 'b', label = "Predicted")
-#plt.plot([generated_sequence[0, i, 0] for i in range(fsm_model.time)], 'b', label = "Predicted")
 plt.legend()
-plt.savefig('src\\experiment1\\output\\figures\\gen_seq_with_input_full_seq.png')
+plt.savefig('./src/experiment1/output/figures/gen_seq_with_input_full_seq.png')
 plt.show()
 
 
 fsm_model = fsm.FSM(rnn_model)
-generated_sequence = fsm_model(sine_wave_dict['data']['test'][0:1, 0:1, :], time = 100)
+generated_sequence = fsm_model(sine_wave_dict['data']['test'][:, 0:1, :], time = 100)
 
 plt.figure()
 plt.plot(sine_wave_dict['data']['test'][0, :, -1], 'r', label = "True")

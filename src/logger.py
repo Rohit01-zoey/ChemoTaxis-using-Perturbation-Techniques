@@ -12,6 +12,7 @@ class Logger:
 
     def _setup_logger(self):
         # Create the log directory if it doesn't exist
+        print(self.log_file)
         log_dir = os.path.dirname(self.log_file)
         os.makedirs(log_dir, exist_ok=True)
 
