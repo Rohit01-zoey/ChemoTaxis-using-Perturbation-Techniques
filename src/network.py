@@ -25,6 +25,7 @@ def get_weights(cfg, model):
         return {'Wxh' : model.Wxh, 'Whh' : model.Whh, 'Why' : model.Why, 'bh' : model.bh, 'by' : model.by}
     else:
         raise NotImplementedError
+
     
 
 def set_weights(cfg, model, weights):

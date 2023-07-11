@@ -4,6 +4,7 @@ from metrics import utils
 class RNN:
     def __init__(self, input_nodes : int, hidden_nodes : int, output_nodes : int, seed = 42):
         """ Initialize the RNN model."""
+        self.name = 'rnn_1hl' # name of the model
         self.input_nodes = input_nodes #the number of input nodes in the RNN
         self.hidden_nodes = hidden_nodes #the number of hidden nodes in each hidden layer
         self.output_nodes = output_nodes #the number of output nodes in the RNN
