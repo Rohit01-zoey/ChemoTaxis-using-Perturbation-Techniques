@@ -19,6 +19,7 @@ class SineWaveLoader:
             self.time_stamps = time_stamps # number of time stamps
             self.amplitude = amplitude # array of amplitudes
             self.frequency = frequency # array of frequencies
+            np.random.seed(self.SEED)
             self.phase = np.random.rand(self.n_samples) * 2 * np.pi # array of phases
         else:
             raise ValueError("Amplitude and frequency should be float values.")
