@@ -11,7 +11,8 @@ class RNN:
         self.depth = 3 #the total number of layers in the RNN
         self.seed  = seed #the seed for the random number generator
 
-
+    def __repr__(self) -> str:
+        return f'RNN(input_nodes={self.input_nodes}, hidden_nodes={self.hidden_nodes}, output_nodes={self.output_nodes}, seed={self.seed})'
 
     def initialize(self):
         """Intialize the weights and biases of the RNN."""
