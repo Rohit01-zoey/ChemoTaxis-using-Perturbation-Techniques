@@ -17,13 +17,19 @@ class Adam:
         self.v = None
         self.t = 0
 
-    def update(self, params, grads):
+    def update(self, params, grads, lr = None):
         """Update the parameters of the model.
 
         Args:
             params (dict): Dictionary containing the parameters of the model.
             grads (dict): Dictionary containing the gradients of the model.
+            lr (float, optional): The learning rate. Defaults to None.
+        Returns:
+            params (dict): Dictionary containing the updated parameters of the model.
         """
+        if lr is not None:
+            self.lr = lr
+            
         if self.m is None:
             self.m = {}
             self.v = {}
