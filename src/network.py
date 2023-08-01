@@ -8,14 +8,31 @@ import copy
 import numpy as np
 
 class LearnerRateScheduler:
-    def __init__(self, type, base_learning_rate, decay_rate, decay_steps, final_learning_rate = 0.0, warmup_epochs=10):
+    def __init__(self, type, base_learning_rate, warmup_epochs=10, **kwargs):
         self.type = type
         self.base_learning_rate = base_learning_rate
-        self.final_learning_rate = final_learning_rate
-        self.decay_rate = decay_rate
-        self.decay_steps = decay_steps
+        allowed_parameters = ['final_learning_rate', 'decay_rate', 'decay_steps', 'total_epochs']
+        # Check if any unknown keys are present in kwargs
+        unknown_parameters = set(kwargs.keys()) - set(allowed_parameters)
+        if unknown_parameters:
+            raise TypeError(f"Unknown parameter(s) provided: {', '.join(unknown_parameters)}")
+        self.final_learning_rate = kwargs['final_learning_rate'] if 'final_learning_rate' in kwargs else None
+        self.decay_rate = kwargs['decay_rate'] if 'decay_rate' in kwargs else None
+        self.decay_steps = kwargs['decay_steps'] if 'decay_steps' in kwargs else None
         self.warmup_epochs = warmup_epochs
+        self.total_epochs = kwargs['total_epochs'] if 'total_epochs' in kwargs else None
         self.lr_init = 0.0
+        
+        if self.type == 'linear':
+            if 'final_learning_rate' not in kwargs.keys():
+                raise TypeError(f"final_learning_rate must be provided for linear decay")
+            if 'total_epochs' not in kwargs.keys():
+                raise TypeError(f"total_epochs must be provided for linear decay")
+        if self.type == 'step':
+            if 'decay_rate' not in kwargs.keys():
+                raise TypeError(f"decay_rate must be provided for step decay")
+            if 'decay_steps' not in kwargs.keys():
+                raise TypeError(f"decay_steps must be provided for step decay")
     
     def __call__(self, step):
         if step < self.warmup_epochs:
@@ -25,7 +42,7 @@ class LearnerRateScheduler:
             if self.type == 'constant':
                 return self.base_learning_rate
             elif self.type == 'linear':
-                pass
+                return self.base_learning_rate - (self.base_learning_rate - self.final_learning_rate) * (step - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)
             elif self.type == 'exponential':
                 pass
             elif self.type == 'step':
@@ -170,7 +187,7 @@ def get_weight_updates(cfg, gradients, learning_rate):
     # return weight_updates
     
 
-def train(cfg, model, data, lr_schedule, logger):
+def train(cfg, model, data, lr_schedule, logger, wand = None):
     """Perform the training step.
 
     Args:
@@ -202,3 +219,7 @@ def train(cfg, model, data, lr_schedule, logger):
         val_loss = utils.mse_loss_seq(output_val, data['val'], batch_norm=True)
         # del fsm_model # delete the fsm model since its not required anymore
         logger.log_epoch(iter, train_loss, val_loss) # log the mse_loss and store it in a file
+        if wand is not None:
+            # log metrics to wandb
+            wand.log({"lr" : lr_schedule(iter), "train loss": train_loss, "test loss": val_loss})
+    
