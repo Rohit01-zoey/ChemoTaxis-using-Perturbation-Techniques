@@ -5,29 +5,40 @@ import time
 class Logger:
     """Logger class helper to log training progress to a file and the console.
     """
-    def __init__(self, log_file, experiment_title):
+    def __init__(self, log_file, experiment_title, print_to_console = False):
         self.log_file = log_file
         self.experiment_title = experiment_title
+        self.print_to_console = print_to_console
         self.logger = self._setup_logger()
 
     def _setup_logger(self):
         # Create the log directory if it doesn't exist
+        # print(self.log_file)
         log_dir = os.path.dirname(self.log_file)
         os.makedirs(log_dir, exist_ok=True)
 
         # Set up logging configuration
+        handlers = [logging.FileHandler(self.log_file)]
+        if self.print_to_console:
+            handlers.append(logging.StreamHandler())
+            
         logging.basicConfig(level=logging.INFO,
                             format='%(asctime)s [%(levelname)s] %(message)s',
-                            handlers=[
-                                logging.FileHandler(self.log_file),
-                                logging.StreamHandler()
-                            ])
-
+                            handlers=handlers)
+        
+        #cleaning the log file
+        self._clear_log_file()
+        
         # Add experiment title to the log file
         logging.getLogger().info('Experiment: {}'.format(self.experiment_title))
 
         # Return the logger object
         return logging.getLogger()
+    
+    def _clear_log_file(self):
+        # Open the log file in write mode, effectively clearing its content
+        with open(self.log_file, 'w') as f:
+            f.write('')
 
     def log_epoch(self, epoch, train_loss, val_loss):
         # Log epoch information
