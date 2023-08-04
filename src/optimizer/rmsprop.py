@@ -5,21 +5,21 @@ class RMSProp:
         """ Initialize the RMSProp optimizer.
 
         Args:
-            lr (float, optional): The learning rate. Defaults to 0.01.
             decay_rate (float, optional): The decay rate of the RMSProp optimizer. Defaults to 0.9.
         """
-        self.lr = lr
         self.decay_rate = decay_rate
         self.epsilon = 1e-8
         self.cache = None
 
-    def update(self, params, grads):
+    def update(self, params, grads, lr):
         """Update the parameters of the model.
 
         Args:
             params (dict): Dictionary containing the parameters of the model.
             grads (dict): Dictionary containing the gradients of the model.
+            lr (float): The learning rate.
         """
+        self.lr = lr
         if self.cache is None:
             self.cache = {}
             for key, val in params.items():
