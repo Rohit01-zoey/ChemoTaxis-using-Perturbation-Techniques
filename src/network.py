@@ -246,7 +246,7 @@ def train(cfg, model, data, lr_schedule, logger, dataloader = None, wand = None)
         params = optim.update(get_weights(cfg, model), gradients, lr=lr_schedule(iter))
         set_weights(cfg, model, params)
         
-        output_val = model.forward(data['val'])
+        output_val = model.forward(data['val'], training=False)
         val_loss = utils.mse_loss_seq(output_val, data['val'], batch_norm=True)
         logger.log_epoch(iter, train_loss if dataloader is None else total_train_loss, val_loss) # log the mse_loss and store it in a file
         if wand is not None:
