@@ -18,9 +18,11 @@ class Dropout:
     def __init__(self, dropout_rate):
         self.dropout_rate = dropout_rate
         self.mask = None
+        if dropout_rate < 0 or dropout_rate > 1:
+            raise ValueError('The dropout rate must be between 0 and 1, but got {} as dropout rate.'.format(dropout_rate))
 
     def forward(self, x, training=True):
-        if training:
+        if training and self.dropout_rate != 0:
             self.mask = np.random.rand(*x.shape) < (1 - self.dropout_rate)
             scaled_x = x * self.mask / (1 - self.dropout_rate)
             return scaled_x
