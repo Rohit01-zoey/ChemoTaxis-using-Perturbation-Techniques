@@ -3,8 +3,17 @@ from metrics import utils
 from modules import dropout
 
 class RNN:
-    def __init__(self, input_nodes : int, hidden_nodes : int, output_nodes : int, dropout_rate = 0.4, seed = 42):
-        """ Initialize the RNN model."""
+    def __init__(self, input_nodes : int, hidden_nodes : int, output_nodes : int, dropout_rate = 0.0, seed = 42):
+        """
+        Initialize the RNN model.
+
+        Args:
+            input_nodes (int): The number of input nodes in the RNN.
+            hidden_nodes (int): The number of hidden nodes in each hidden layer.
+            output_nodes (int): The number of output nodes in the RNN.
+            dropout_rate (float, optional): Dropout rate used for regularization during training. Default is 0.0.
+            seed (int, optional): Seed for the random number generator. Default is 42.
+        """
         self.name = 'rnn_1hl' # name of the model
         self.input_nodes = input_nodes #the number of input nodes in the RNN
         self.hidden_nodes = hidden_nodes #the number of hidden nodes in each hidden layer
