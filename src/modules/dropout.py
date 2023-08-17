@@ -23,7 +23,8 @@ class Dropout:
 
     def forward(self, x, training=True):
         if training and self.dropout_rate != 0:
-            self.mask = np.random.rand(*x.shape) < (1 - self.dropout_rate)
+            #self.mask = np.random.rand(*x.shape) < (1 - self.dropout_rate)
+            self.mask = np.random.binomial(1, 1 - self.dropout_rate, size=x.shape)
             scaled_x = x * self.mask / (1 - self.dropout_rate)
             return scaled_x
         else:
