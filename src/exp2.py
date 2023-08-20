@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import wandb
+import os
+import warnings
 
-
-from models import rnn_1hl
+from models import rnn_1hl, rnn_xhl
 from metrics import utils
 from data import sine_wave
 import config
@@ -15,32 +15,29 @@ from network import LearnerRateScheduler
 from config import cfg
 from data.chemotaxi import ChemotaxisDataLoader
 from data.data import DataLoader
+from utils import plot_losses_from_files
 
-# wandb.init(
-#     # set the wandb project where this run will be logged
-#     project="Chemotaxis",
-    
-#     # track hyperparameters and run metadata
-#     config={
-#     "architecture": "RNN",
-#     "dataset": "Chemotaxis",
-#     "epochs": 10,
-#     "hidden layers" : 20
-#     }
-# )
+class DirectoryExistsWarning(Warning):
+    pass
 
 dataset = ChemotaxisDataLoader()
 print("Shortening and stacking....")
-dataset.shorten(200)
+dataset.shorten(new_length=1000)
 
 dataset_l = dataset.shortened_dataset
-dataset_loader = DataLoader(dataset_l['train'], batch_size=128, shuffle=True)
+dataset_loader = DataLoader(dataset_l['train'], labels = None, batch_size=128, shuffle=True)
 print("Shape of the training dataset after shortening: ", dataset_l['train'].shape)
-#lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],2, 0.1, 20)
-lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],
-                                   base_learning_rate=0.01,
-                                   final_learning_rate=0.0,
-                                   total_epochs=cfg['training']['epochs'])
+# lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],
+#                                    base_learning_rate=0.1,
+#                                    final_learning_rate=0.0,
+#                                    total_epochs=cfg['training']['epochs'])
+# lr_schedule= LearnerRateScheduler(cfg['training']['learning_rate'], 
+#                                   base_learning_rate=1, 
+#                                   warmup_epochs=5,
+#                                   decay_rate = 0.7, 
+#                                   decay_steps = 10)
+lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'], 
+                                   base_learning_rate=0.01)
 plt.figure()
 plt.subplot(121)
 plt.plot([i for i in range(1, cfg['training']['epochs']+1)],[lr_schedule(i) for i in range(cfg['training']['epochs'])], marker='.', linestyle='-')
@@ -63,27 +60,43 @@ input_size = cfg['model']['input_size']
 output_size = cfg['model']['output_size']
 hidden_size = cfg['model']['hidden_size']
 seed = cfg['training']['seed']
-# lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'], 1, 0.7, 20)
-lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],
-                                   base_learning_rate=1,
-                                   final_learning_rate=0.0,
-                                   total_epochs=cfg['training']['epochs'])
+
+root = './src/experiment2/results/{}/'.format(cfg['training']['seed'])
+if not os.path.exists(root):
+    os.makedirs(root)
+else:
+    warnings.warn(f"Directory '{root}' already exists. Results will be overwritten.", DirectoryExistsWarning)
+
+
 log_file = logger.Logger(cfg['log']['log_file'], cfg['log']['experiment_name'])
 
-rnn_model = rnn_1hl.RNN(input_size, hidden_size, output_size, seed=seed)
+if model_name=='rnn_1hl':
+    rnn_model = rnn_1hl.RNN(input_size, hidden_size, output_size, dropout_rate=0.0, seed=seed)
+elif model_name=='rnn_xhl':
+    rnn_model = rnn_xhl.RNNv2(input_size, hidden_size, output_size, dropout_rate=0.0, seed=seed)
+else:
+    raise NotImplementedError
+
 rnn_model.initialize()
 
-network.train(cfg, rnn_model, dataset_l, lr_schedule, logger=log_file, dataloader = dataset_loader, wand=None)
-# [optional] finish the wandb run, necessary in notebooks
-# wandb.finish()
+network.train_chemotaxis(cfg, rnn_model, dataset_l, lr_schedule, logger=log_file, dataloader = dataset_loader, save_model = True, root=root)
 
 
 log_file.close() #free up the logger file
 
+plt.show()
 plt.figure()
-plt.scatter(dataset_l['train'][0, 2:, 1], dataset_l['train'][0, 2:, 2], marker = '.', color = 'r', label = "True")
-plt.scatter(rnn_model.forward(dataset_l['train'])[0, 1:-1, 1], rnn_model.forward(dataset_l['train'])[0, 1:-1, 2], marker = '.', color = 'b', label = "Predicted")
-plt.legend()
-# plt.savefig()
+plt.subplot(121)
+plt.scatter(dataset_l['train'][0, :, 6], dataset_l['train'][0, :, 7], marker = '.', color = 'r', label = "True")
+plt.title("True Updates") 
+plt.xlabel("dx")
+plt.ylabel("dy")
+plt.grid(True)
+plt.subplot(122)
+plt.scatter(rnn_model.forward(dataset_l['train'][0:1, : , 3:4])[0, :, 0], rnn_model.forward(dataset_l['train'][0:1, : , 3:4])[0, :, 1], marker = '.', color = 'b', label = "Predicted")
+plt.title("Predicted Updates")
+plt.xlabel("dx")
+plt.ylabel("dy")
+plt.grid(True)
 plt.show()
 

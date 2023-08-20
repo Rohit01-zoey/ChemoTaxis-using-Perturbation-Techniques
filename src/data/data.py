@@ -1,8 +1,9 @@
 import numpy as np
 
 class DataLoader:
-    def __init__(self, data, batch_size, shuffle = True):
+    def __init__(self, data, labels, batch_size, shuffle = True):
         self.data = data
+        self.labels = labels
         self.batch_size = batch_size
         self.total_samples = data.shape[0]
         self.total_batches = (self.total_samples + self.batch_size - 1) // self.batch_size
@@ -28,10 +29,12 @@ class DataLoader:
 
         batch_indices = self.indices[start_idx:end_idx]
         batch_data = self.data[batch_indices]
+        if self.labels is not None:
+            batch_labels = self.labels[batch_indices]
 
         self.current_batch += 1
 
-        return batch_data
+        return (batch_data, batch_labels) if self.labels is not None else batch_data 
 
     def __len__(self):
         return self.total_batches

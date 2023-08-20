@@ -24,13 +24,32 @@ class ChemotaxisDataLoader:
             
         self.length = min(self.initial_dataset_length)
         self.dataset = {}
-        self.dataset['train'] = dataset_loaded[:20, :self.length, :]
-        self.dataset['val'] = dataset_loaded[20:, :self.length, :] 
+        self.dataset['train'] = dataset_loaded[:10, :self.length, :]
+        self.dataset['val'] = dataset_loaded[27:, :self.length, :] 
         print("Train Dataset loaded with shape: ", self.dataset['train'].shape)
         print("Validation Dataset loaded with shape: ", self.dataset['val'].shape)
         
+    def _stats(self, data):
+        """Initializes the statistics of the given dataset as a dictionary with keys 'mean' and 'std'
+
+        Args:
+            data (n_samples, n_timesteps, n_features): The time sequence data
+        """
+        self.stats = {'mean' : np.mean(data, axis = 1, keepdims=True), 'std' : np.std(data, axis = 1, keepdims=True)}
         
-    def shorten(self, new_length = 200):
+    def _normalize(self):
+        """_summary_
+
+        Args:
+            data (_type_): _description_
+        """
+        self._stats(self.shortened_dataset['train']) # initialize the statistics
+        self.shortened_dataset['train'] = (self.shortened_dataset['train'] - self.stats['mean'])/self.stats['std']
+        self.shortened_dataset['val'] = (self.shortened_dataset['val'] - self.stats['mean'])/self.stats['std']
+        
+        
+        
+    def shorten(self, normalize = False, new_length = 200):
         """Shorten the given dataset such that each sample has the same length of new_length. The number
         of training examples increases by old_length//new_length since all these are stacked
 
@@ -47,7 +66,9 @@ class ChemotaxisDataLoader:
         for i in range(1, self.dataset['val'].shape[0]):
             self.shortened_dataset['val'] = np.concatenate([self.shortened_dataset['val'], np.concatenate([self.dataset['train'][i:i+1, j*new_length:(j+1)*new_length, :] for j in range(0, self.length//new_length)], axis=0)], axis = 0)
 
-
+        if normalize:
+            print("Normalizing the data....")
+            self._normalize()
 
 
 # data = ChemotaxisDataLoader()

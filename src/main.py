@@ -13,7 +13,7 @@ from config import cfg
 
 
 
-lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],0.1, 0.7, 20)
+lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'], base_learning_rate=0.1, decay_rate = 0.7, decay_steps = 20)
 plt.figure(figsize=(12, 5))
 plt.subplot(121)
 plt.plot([i for i in range(1, 1001)],[lr_schedule(i) for i in range(1000)], marker='.', linestyle='-')
@@ -49,9 +49,9 @@ seed = cfg['training']['seed']
 
 log_file = logger.Logger(cfg['log']['log_file'], cfg['log']['experiment_name'])
 
-lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],0.1, 0.7, 20)
+lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'], base_learning_rate=0.1, decay_rate = 0.7, decay_steps = 20)
 
-rnn_model = rnn_1hl.RNN(input_size, hidden_size, output_size, seed=seed)
+rnn_model = rnn_1hl.RNN(input_size, hidden_size, output_size, dropout_rate=0,seed=seed)
 rnn_model.initialize()
 
 network.train(cfg, rnn_model, sine_wave_dict['data'], lr_schedule, logger=log_file)

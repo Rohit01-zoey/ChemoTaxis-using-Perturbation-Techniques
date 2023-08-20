@@ -1,14 +1,14 @@
 from models import rnn_1hl
 from metrics import utils
 import logger
-from tqdm import tqdm
-import time
-
 from optimizer import adam, rmsprop
 from modules import fsm 
 
+from tqdm import tqdm
+import time
 import copy
 import numpy as np
+import pickle
 
 class LearnerRateScheduler:
     """Learning rate scheduler class. This class implements the learning rate scheduler."""
@@ -87,6 +87,15 @@ def get_weights(cfg, model):
 
     if cfg['model']['name'] == 'rnn_1hl':
         return {'Wxh' : model.Wxh, 'Whh' : model.Whh, 'Why' : model.Why, 'bh' : model.bh, 'by' : model.by}
+    elif cfg['model']['name'] == 'rnn_xhl':
+        _dict_param = {} #create an empty list
+        for i in range(len(model.weights)):
+            _dict_param['W{}'.format(i)] = model.weights[i] # append the weights
+        for i in range(len(model.lateral_weights)):
+            _dict_param['L{}'.format(i)] = model.lateral_weights[i]
+        for i in range(len(model.biases)):
+            _dict_param['b{}'.format(i)] = model.biases[i]
+        return _dict_param
     else:
         raise NotImplementedError
 
@@ -110,6 +119,16 @@ def set_weights(cfg, model, weights):
         model.Why = weights['Why']
         model.bh = weights['bh']
         model.by = weights['by']
+    elif cfg['model']['name'] == 'rnn_xhl':
+        for key in weights.keys():
+            if key[0] == 'W':
+                model.weights[int(key[1:])] = weights[key]
+            elif key[0] == 'b':
+                model.biases[int(key[1:])] = weights[key]
+            elif key[0] == 'L':
+                model.lateral_weights[int(key[1:])] = weights[key]
+            else:
+                raise ValueError(f"Unknown key {key}")
     else:
         raise NotImplementedError
     
@@ -131,6 +150,16 @@ def update_model_weights(cfg, model, weight_updates):
         model.Why += weight_updates['Why']
         model.bh += weight_updates['bh']
         model.by += weight_updates['by']
+    elif cfg['model']['name'] == 'rnn_xhl':
+        for key in weight_updates.keys():
+            if key[0] == 'W':
+                model.weights[int(key[1])] += weight_updates[key]
+            elif key[0] == 'b':
+                model.biases[int(key[1])] += weight_updates[key]
+            elif key[0] == 'L':
+                model.lateral_weights[int(key[1])] += weight_updates[key]
+            else:
+                raise ValueError(f"Unknown key {key}")
     else:
         raise NotImplementedError
     
@@ -151,9 +180,9 @@ def get_gradients(cfg, model, data, loss):
                 set_weights(cfg, model_perturbed, weights)
                 #n print(key, index, np.sum(get_weights(cfg, model_perturbed)[key] - unperturbed_weights[key]))
                 #perform the forward propagation step
-                y_perturbed = model_perturbed.forward(data)
+                y_perturbed = model_perturbed.forward(data[:,:,3:4])
                 #compute the loss
-                loss_perturbed = utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
+                loss_perturbed = utils.mse_loss(y_perturbed, data[:, :, 6:]) #! utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
                 #compute the gradient
                 gradient_dict[key][index] = (loss_perturbed - loss) / cfg['training']['perturbation']
                 #after the gradient is computed, reset the weights to the original weights
@@ -192,12 +221,26 @@ def get_weight_updates(cfg, gradients, learning_rate):
                 if non_clipped_grad[key].min() < cfg['training']['min_clip_value']:
                     non_clipped_grad[key][non_clipped_grad[key]<cfg['training']['min_clip_value']] = cfg['training']['min_clip_value']
             return non_clipped_grad
-
+        
+        elif cfg['model']['name'] == 'rnn_xhl':
+            non_clipped_grad = {}
+            for key in gradients.keys():
+                non_clipped_grad[key] = -learning_rate * gradients[key]
+            for key in non_clipped_grad.keys():
+                if non_clipped_grad[key].max() > cfg['training']['max_clip_value']:
+                    non_clipped_grad[key][non_clipped_grad[key]>cfg['training']['max_clip_value']] = cfg['training']['max_clip_value']
+                if non_clipped_grad[key].min() < cfg['training']['min_clip_value']:
+                    non_clipped_grad[key][non_clipped_grad[key]<cfg['training']['min_clip_value']] = cfg['training']['min_clip_value']
+            return non_clipped_grad
         else:
             raise NotImplementedError
     else:
         if cfg['model']['name'] == 'rnn_1hl':
             return {'Wxh' : -learning_rate * gradients['Wxh'], 'Whh' : -learning_rate * gradients['Whh'], 'Why' : -learning_rate * gradients['Why'], 'bh' : -learning_rate * gradients['bh'], 'by' : -learning_rate * gradients['by']}
+        elif cfg['model']['name'] == 'rnn_xhl':
+            non_clipped_grad = {}
+            for key in gradients.keys():
+                non_clipped_grad[key] = -learning_rate * gradients[key]
         else:
             raise NotImplementedError
 
@@ -252,4 +295,55 @@ def train(cfg, model, data, lr_schedule, logger, dataloader = None, wand = None)
         if wand is not None:
             # log metrics to wandb
             wand.log({"lr" : lr_schedule(iter), "train loss": train_loss, "test loss": val_loss})
+    
+
+def train_chemotaxis(cfg, model, data, lr_schedule, logger, dataloader = None, root = "./", save_model = True):
+    """Perform the training step.
+
+    Args:
+        cfg (config): config object
+        model (model): model object. The model is expected to be initialized!
+        data (np.ndarray): data array of shape (n_samples, n_timestamps, n_features)
+        lr_schedule (callable): learning rate scheduler function. The function should take the current epoch as input and return the learning rate.
+        logger (logger): logger object to log the training process
+        dataloader (DataLoader, optional): dataloader object. Defaults to None.
+        root (str, optional): root directory to save the model. Defaults to "./".
+        save_model (bool, optional): whether to save the model or not. Defaults to True.
+    """
+    epochs = cfg['training']['epochs']
+    
+    best_val_loss = np.inf
+    
+    optim = adam.Adam() # initialize the optimizer
+    for iter in range(epochs):
+        if dataloader is not None:
+            pbar = tqdm(dataloader, total=len(dataloader), desc=f"Epoch {iter + 1}/{epochs}", ncols=140)
+            total_train_loss = 0
+            for batch in pbar:
+                output = model.forward(batch[:, :, 3:4])
+                train_loss = utils.mse_loss(output, batch[:, :, 6:], batch_norm=True)
+                total_train_loss += utils.mse_loss(output, batch[:, :, 6:], batch_norm=False) # adding the true train loss
+                gradients = get_gradients(cfg, model, batch, train_loss) # compute the gradients
+                params = optim.update(get_weights(cfg, model), gradients, lr=lr_schedule(iter))
+                set_weights(cfg, model, params)
+                pbar.set_postfix_str(f"Train loss: {train_loss}")
+                time.sleep(0.01) #sleep for 10ms to avoid tqdm progress bar from freezing 
+            total_train_loss /= data['train'].shape[0] # get the actual averaged train loss
+        else:
+            output = model.forward(data['train'][:, :, 3:4]) # perform the forward propagation step
+            train_loss = utils.mse_loss(output, data['train'][:, :, 6:], batch_norm=True)
+            gradients = get_gradients(cfg, model, data['train'], train_loss) # compute the gradients
+
+        params = optim.update(get_weights(cfg, model), gradients, lr=lr_schedule(iter))
+        set_weights(cfg, model, params)
+        
+        output_val = model.forward(data['val'][:, :, 3:4], training=False)
+        val_loss = utils.mse_loss(output_val, data['val'][:, :, 6:], batch_norm=True)
+        if val_loss <= best_val_loss :
+            pickle.dump(model, open(root + "best_model.pkl", "wb")) # save the best model
+            
+        logger.log_epoch(iter, train_loss if dataloader is None else total_train_loss, val_loss) # log the mse_loss and store it in a file
+        
+        pickle.dump(model, open(root + "last_model.pkl", "wb")) # save the last model
+    
     
