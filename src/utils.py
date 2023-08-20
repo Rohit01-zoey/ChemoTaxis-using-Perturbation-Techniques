@@ -1,6 +1,112 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+class ReduceLROnPlateau:
+    """Implements the ReduceLROnPlateau callback.
+    Args:
+        initial_lr (float): Initial learning rate.
+        factor (float): Factor by which learning rate is reduced. Default is 0.1.
+        patience (int): Number of epochs with no improvement after which learning rate will be reduced. Default is 10.
+        min_lr (float): Minimum learning rate. Default is 1e-6.
+
+    Attributes:
+        lr (float): Current learning rate.
+        factor (float): Factor for reducing learning rate.
+        patience (int): Number of epochs to wait for improvement before reducing learning rate.
+        min_lr (float): Minimum learning rate allowed.
+        wait (int): Number of epochs with no improvement.
+        best_loss (float): Best validation loss observed.
+    
+    Methods:
+        step(validation_loss): Adjusts learning rate based on validation loss.
+    """
+    def __init__(self, initial_lr, factor=0.1, patience=10, min_lr=1e-6):
+        self.lr = initial_lr
+        self.factor = factor
+        self.patience = patience
+        self.min_lr = min_lr
+        self.wait = 0
+        self.best_loss = float('inf')
+
+    def step(self, validation_loss):
+        """Adjusts learning rate based on validation loss.
+
+        Args:
+            validation_loss (float): Validation loss for the current epoch.
+        """
+        if validation_loss < self.best_loss:
+            self.best_loss = validation_loss
+            self.wait = 0
+        else:
+            self.wait += 1
+            if self.wait >= self.patience:
+                self.lr *= self.factor
+                self.lr = max(self.lr, self.min_lr)
+                self.wait = 0
+                print(f'Reducing learning rate to {self.lr}')
+                
+                
+class LearnerRateScheduler:
+    """Learning rate scheduler class. This class implements the learning rate scheduler."""
+    def __init__(self, type, base_learning_rate, warmup_epochs=10, **kwargs):
+        """_summary_
+
+        Args:
+            type (str): The type of the learning rate scheduler. Can be one of 'constant', 'linear', 'exponential' or 'step'.
+            base_learning_rate (float): The learning rate to start with after warmup_epochs.
+            warmup_epochs (int, optional): The number of epochs for warm-up. Linear in nature. Goes from lr_init(defaults to 0) to base learning rate . Defaults to 10.
+            **kwargs: Additional arguments for the learning rate scheduler. The arguments depend on the type of scheduler used.
+            
+            
+        Raises:
+            TypeError: _description_
+            TypeError: _description_
+            TypeError: _description_
+            TypeError: _description_
+            TypeError: _description_
+        """
+        self.type = type
+        self.base_learning_rate = base_learning_rate
+        allowed_parameters = ['final_learning_rate', 'decay_rate', 'decay_steps', 'total_epochs', 'lr_init']
+        # Check if any unknown keys are present in kwargs
+        unknown_parameters = set(kwargs.keys()) - set(allowed_parameters)
+        if unknown_parameters:
+            raise TypeError(f"Unknown parameter(s) provided: {', '.join(unknown_parameters)}")
+        self.final_learning_rate = kwargs['final_learning_rate'] if 'final_learning_rate' in kwargs else None
+        self.decay_rate = kwargs['decay_rate'] if 'decay_rate' in kwargs else None
+        self.decay_steps = kwargs['decay_steps'] if 'decay_steps' in kwargs else None
+        self.warmup_epochs = warmup_epochs
+        self.total_epochs = kwargs['total_epochs'] if 'total_epochs' in kwargs else None
+        self.lr_init = kwargs['lr_init'] if 'lr_init' in kwargs else 0.0
+        
+        if self.type == 'linear':
+            if 'final_learning_rate' not in kwargs.keys():
+                raise TypeError(f"final_learning_rate must be provided for linear decay")
+            if 'total_epochs' not in kwargs.keys():
+                raise TypeError(f"total_epochs must be provided for linear decay")
+        if self.type == 'step':
+            if 'decay_rate' not in kwargs.keys():
+                raise TypeError(f"decay_rate must be provided for step decay")
+            if 'decay_steps' not in kwargs.keys():
+                raise TypeError(f"decay_steps must be provided for step decay")
+    
+    def __call__(self, step):
+        if step < self.warmup_epochs:
+            #linear increase to base_learning_rate
+            return self.lr_init + (self.base_learning_rate-self.lr_init) * (step / self.warmup_epochs)
+        else:
+            if self.type == 'constant':
+                return self.base_learning_rate
+            elif self.type == 'linear':
+                return self.base_learning_rate - (self.base_learning_rate - self.final_learning_rate) * (step - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)
+            elif self.type == 'exponential':
+                pass
+            elif self.type == 'step':
+                return self.base_learning_rate * (self.decay_rate ** (int(step / self.decay_steps)))
+            else:
+                raise NotImplementedError
+            
+            
 def plot_losses_from_files(file_paths, error_bar = False, shaded_error = True, show_plot = True, save_path=None):
     """
     Plot and save training and validation losses with average and standard deviation.

@@ -10,66 +10,6 @@ import copy
 import numpy as np
 import pickle
 
-class LearnerRateScheduler:
-    """Learning rate scheduler class. This class implements the learning rate scheduler."""
-    def __init__(self, type, base_learning_rate, warmup_epochs=10, **kwargs):
-        """_summary_
-
-        Args:
-            type (str): The type of the learning rate scheduler. Can be one of 'constant', 'linear', 'exponential' or 'step'.
-            base_learning_rate (float): The learning rate to start with after warmup_epochs.
-            warmup_epochs (int, optional): The number of epochs for warm-up. Linear in nature. Goes from lr_init(defaults to 0) to base learning rate . Defaults to 10.
-            **kwargs: Additional arguments for the learning rate scheduler. The arguments depend on the type of scheduler used.
-            
-            
-        Raises:
-            TypeError: _description_
-            TypeError: _description_
-            TypeError: _description_
-            TypeError: _description_
-            TypeError: _description_
-        """
-        self.type = type
-        self.base_learning_rate = base_learning_rate
-        allowed_parameters = ['final_learning_rate', 'decay_rate', 'decay_steps', 'total_epochs', 'lr_init']
-        # Check if any unknown keys are present in kwargs
-        unknown_parameters = set(kwargs.keys()) - set(allowed_parameters)
-        if unknown_parameters:
-            raise TypeError(f"Unknown parameter(s) provided: {', '.join(unknown_parameters)}")
-        self.final_learning_rate = kwargs['final_learning_rate'] if 'final_learning_rate' in kwargs else None
-        self.decay_rate = kwargs['decay_rate'] if 'decay_rate' in kwargs else None
-        self.decay_steps = kwargs['decay_steps'] if 'decay_steps' in kwargs else None
-        self.warmup_epochs = warmup_epochs
-        self.total_epochs = kwargs['total_epochs'] if 'total_epochs' in kwargs else None
-        self.lr_init = kwargs['lr_init'] if 'lr_init' in kwargs else 0.0
-        
-        if self.type == 'linear':
-            if 'final_learning_rate' not in kwargs.keys():
-                raise TypeError(f"final_learning_rate must be provided for linear decay")
-            if 'total_epochs' not in kwargs.keys():
-                raise TypeError(f"total_epochs must be provided for linear decay")
-        if self.type == 'step':
-            if 'decay_rate' not in kwargs.keys():
-                raise TypeError(f"decay_rate must be provided for step decay")
-            if 'decay_steps' not in kwargs.keys():
-                raise TypeError(f"decay_steps must be provided for step decay")
-    
-    def __call__(self, step):
-        if step < self.warmup_epochs:
-            #linear increase to base_learning_rate
-            return self.lr_init + (self.base_learning_rate-self.lr_init) * (step / self.warmup_epochs)
-        else:
-            if self.type == 'constant':
-                return self.base_learning_rate
-            elif self.type == 'linear':
-                return self.base_learning_rate - (self.base_learning_rate - self.final_learning_rate) * (step - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)
-            elif self.type == 'exponential':
-                pass
-            elif self.type == 'step':
-                return self.base_learning_rate * (self.decay_rate ** (int(step / self.decay_steps)))
-            else:
-                raise NotImplementedError
-            
 
 def get_weights(cfg, model):
     """Get the weights of the model.
