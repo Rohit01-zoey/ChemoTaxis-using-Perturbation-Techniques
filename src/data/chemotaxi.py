@@ -24,10 +24,11 @@ class ChemotaxisDataLoader:
             
         self.length = min(self.initial_dataset_length)
         self.dataset = {}
-        self.dataset['train'] = dataset_loaded[:10, :self.length, :]
+        self.dataset['train'] = dataset_loaded[:1, :self.length, :]
         self.dataset['val'] = dataset_loaded[27:, :self.length, :] 
         print("Train Dataset loaded with shape: ", self.dataset['train'].shape)
         print("Validation Dataset loaded with shape: ", self.dataset['val'].shape)
+        
         
     def _stats(self, data):
         """Initializes the statistics of the given dataset as a dictionary with keys 'mean' and 'std'

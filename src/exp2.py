@@ -11,33 +11,33 @@ import network
 import logger
 from optimizer import adam, rmsprop
 from modules import fsm
-from network import LearnerRateScheduler
 from config import cfg
 from data.chemotaxi import ChemotaxisDataLoader
 from data.data import DataLoader
-from utils import plot_losses_from_files
+from utils import plot_losses_from_files, ReduceLROnPlateau, LearnerRateScheduler
 
 class DirectoryExistsWarning(Warning):
     pass
 
 dataset = ChemotaxisDataLoader()
 print("Shortening and stacking....")
-dataset.shorten(new_length=1000)
+dataset.shorten(new_length=50)
 
 dataset_l = dataset.shortened_dataset
-dataset_loader = DataLoader(dataset_l['train'], labels = None, batch_size=128, shuffle=True)
+dataset_loader = DataLoader(dataset_l['train'], labels = None, batch_size=256, shuffle=True)
 print("Shape of the training dataset after shortening: ", dataset_l['train'].shape)
 # lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],
 #                                    base_learning_rate=0.1,
 #                                    final_learning_rate=0.0,
 #                                    total_epochs=cfg['training']['epochs'])
-# lr_schedule= LearnerRateScheduler(cfg['training']['learning_rate'], 
-#                                   base_learning_rate=1, 
-#                                   warmup_epochs=5,
-#                                   decay_rate = 0.7, 
-#                                   decay_steps = 10)
-lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'], 
-                                   base_learning_rate=0.01)
+lr_schedule= LearnerRateScheduler(cfg['training']['learning_rate'], 
+                                  base_learning_rate=0.1, 
+                                  warmup_epochs=5,
+                                  decay_rate = 0.5, 
+                                  decay_steps = 20)
+# lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'], 
+#                                    base_learning_rate=0.01)
+
 plt.figure()
 plt.subplot(121)
 plt.plot([i for i in range(1, cfg['training']['epochs']+1)],[lr_schedule(i) for i in range(cfg['training']['epochs'])], marker='.', linestyle='-')
@@ -68,7 +68,7 @@ else:
     warnings.warn(f"Directory '{root}' already exists. Results will be overwritten.", DirectoryExistsWarning)
 
 
-log_file = logger.Logger(cfg['log']['log_file'], cfg['log']['experiment_name'])
+log_file = logger.Logger(root + 'log.txt', cfg['log']['experiment_name'])
 
 if model_name=='rnn_1hl':
     rnn_model = rnn_1hl.RNN(input_size, hidden_size, output_size, dropout_rate=0.0, seed=seed)
@@ -87,13 +87,13 @@ log_file.close() #free up the logger file
 plt.show()
 plt.figure()
 plt.subplot(121)
-plt.scatter(dataset_l['train'][0, :, 6], dataset_l['train'][0, :, 7], marker = '.', color = 'r', label = "True")
+plt.scatter(dataset_l['val'][0, :, 6], dataset_l['val'][0, :, 7], marker = '.', color = 'r', label = "True")
 plt.title("True Updates") 
 plt.xlabel("dx")
 plt.ylabel("dy")
 plt.grid(True)
 plt.subplot(122)
-plt.scatter(rnn_model.forward(dataset_l['train'][0:1, : , 3:4])[0, :, 0], rnn_model.forward(dataset_l['train'][0:1, : , 3:4])[0, :, 1], marker = '.', color = 'b', label = "Predicted")
+plt.scatter(rnn_model.forward(dataset_l['val'][0:1, : , 3:4])[0, :, 0], rnn_model.forward(dataset_l['val'][0:1, : , 3:4])[0, :, 1], marker = '.', color = 'b', label = "Predicted")
 plt.title("Predicted Updates")
 plt.xlabel("dx")
 plt.ylabel("dy")

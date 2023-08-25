@@ -103,7 +103,7 @@ def update_model_weights(cfg, model, weight_updates):
     else:
         raise NotImplementedError
     
-def get_gradients(cfg, model, data, loss):
+def get_gradients(cfg, model, data, loss, loss_fn = utils.mse_loss):
     """Compute the gradients of the model. Returns a ditcionary containing the gradients."""
     if cfg['training']['gradient_computation'] == 'wp':
         #implement weight perturbation
@@ -122,7 +122,7 @@ def get_gradients(cfg, model, data, loss):
                 #perform the forward propagation step
                 y_perturbed = model_perturbed.forward(data[:,:,3:4])
                 #compute the loss
-                loss_perturbed = utils.mse_loss(y_perturbed, data[:, :, 6:]) #! utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
+                loss_perturbed = loss_fn(y_perturbed[:, :-1, :], data[:, 1:, 6:]*1000) #! utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
                 #compute the gradient
                 gradient_dict[key][index] = (loss_perturbed - loss) / cfg['training']['perturbation']
                 #after the gradient is computed, reset the weights to the original weights
@@ -237,7 +237,7 @@ def train(cfg, model, data, lr_schedule, logger, dataloader = None, wand = None)
             wand.log({"lr" : lr_schedule(iter), "train loss": train_loss, "test loss": val_loss})
     
 
-def train_chemotaxis(cfg, model, data, lr_schedule, logger, dataloader = None, root = "./", save_model = True):
+def train_chemotaxis(cfg, model, data, lr_schedule, logger, loss_fn = utils.mse_loss,dataloader = None, root = "./", save_model = True):
     """Perform the training step.
 
     Args:
@@ -261,9 +261,9 @@ def train_chemotaxis(cfg, model, data, lr_schedule, logger, dataloader = None, r
             total_train_loss = 0
             for batch in pbar:
                 output = model.forward(batch[:, :, 3:4])
-                train_loss = utils.mse_loss(output, batch[:, :, 6:], batch_norm=True)
-                total_train_loss += utils.mse_loss(output, batch[:, :, 6:], batch_norm=False) # adding the true train loss
-                gradients = get_gradients(cfg, model, batch, train_loss) # compute the gradients
+                train_loss = loss_fn(output[:, :-1, :], batch[:, 1:, 6:]*1000, batch_norm=True)
+                total_train_loss += loss_fn(output[:, :-1, :], batch[:, 1:, 6:]*1000, batch_norm=False) # adding the true train loss
+                gradients = get_gradients(cfg, model, batch, train_loss, loss_fn=loss_fn) # compute the gradients
                 params = optim.update(get_weights(cfg, model), gradients, lr=lr_schedule(iter))
                 set_weights(cfg, model, params)
                 pbar.set_postfix_str(f"Train loss: {train_loss}")
@@ -271,14 +271,18 @@ def train_chemotaxis(cfg, model, data, lr_schedule, logger, dataloader = None, r
             total_train_loss /= data['train'].shape[0] # get the actual averaged train loss
         else:
             output = model.forward(data['train'][:, :, 3:4]) # perform the forward propagation step
-            train_loss = utils.mse_loss(output, data['train'][:, :, 6:], batch_norm=True)
-            gradients = get_gradients(cfg, model, data['train'], train_loss) # compute the gradients
+            train_loss = loss_fn(output[:, :-1, :], data['train'][:, 1:, 6:]*1000, batch_norm=True)
+            gradients = get_gradients(cfg, model, data['train'], train_loss, loss_fn=loss_fn) # compute the gradients
 
+        
+        if iter>10:
+            print(model.Whh)
+            
         params = optim.update(get_weights(cfg, model), gradients, lr=lr_schedule(iter))
         set_weights(cfg, model, params)
         
         output_val = model.forward(data['val'][:, :, 3:4], training=False)
-        val_loss = utils.mse_loss(output_val, data['val'][:, :, 6:], batch_norm=True)
+        val_loss = loss_fn(output_val[:, :-1, :], data['val'][:, 1:, 6:]*1000, batch_norm=True)
         if val_loss <= best_val_loss :
             pickle.dump(model, open(root + "best_model.pkl", "wb")) # save the best model
             

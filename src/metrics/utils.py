@@ -64,6 +64,79 @@ def mse_loss(x1, x2, batch_norm = True, axis = 0):
         loss = np.sum(np.square(x1 - x2))
     return loss
 
+def mae_loss(x1, x2, batch_norm = True, axis = 0):
+    """ Mean absolute error loss function.
+
+    Args:
+        x1 (float): array like .
+        x2 (float): array like. Shapes of x1 and x2 should be same.
+        batch_norm (bool, optional): Whether to normalize the loss by the batch size. Defaults to True.
+        axis (int, optional): The axis along which the mean of the squared error loss is computed. Defaults to 0.
+
+    Returns:
+        float: Returns the mean squared error loss.
+    """
+    assert x1.shape == x2.shape
+    if batch_norm:
+        if axis==0:
+            assert x1.shape[0]!=0
+            loss = (1.0/x1.shape[0])*np.sum(np.abs(x1 - x2))
+        elif axis==1:
+            assert x1.shape[1]!=0
+            loss = (1.0/x1.shape[1])*np.sum(np.abs(x1 - x2))
+        elif axis==2:
+            assert x1.shape[2]!=0
+            loss = (1.0/x1.shape[2])*np.sum(np.abs(x1 - x2))
+        else:
+            raise NotImplementedError
+    else:
+        loss = np.sum(np.abs(x1 - x2))
+    return loss
+
+def mean_along_axis(x, axis = 0):
+    return (1.0/x.shape[axis])*np.sum(x)
+
+def huber_loss(y_true, y_pred, delta=1.0, batch_norm = True, axis = 0):
+    error = y_true - y_pred
+    condition = np.abs(error) < delta
+    loss = np.where(condition, 0.5 * error**2, delta * np.abs(error) - 0.5 * delta**2)
+    if batch_norm:
+        return mean_along_axis(loss, axis = axis)
+    else:
+        return np.sum(loss)
+
+def smooth_l1_loss(y_true, y_pred, delta=1.0, batch_norm = True, axis = 0):
+    error = y_true - y_pred
+    loss = np.where(np.abs(error) < delta, 0.5 * error**2, np.abs(error) - 0.5 * delta**2)
+    if batch_norm:
+        return mean_along_axis(loss, axis = axis)
+    else:
+        return np.sum(loss)
+
+def log_cosh_loss(y_true, y_pred, batch_norm = True, axis = 0):
+    error = y_true - y_pred
+    loss = np.log(np.cosh(error))
+    if batch_norm:
+        return mean_along_axis(loss, axis = axis)
+    else:
+        return np.sum(loss)
+
+def pseudo_huber_loss(y_true, y_pred, delta=1.0, batch_norm = True, axis = 0):
+    error = y_true - y_pred
+    loss = delta**2 * (np.sqrt(1 + (error / delta)**2) - 1)
+    if batch_norm:
+        return mean_along_axis(loss, axis = axis)
+    else:
+        return np.sum(loss)
+
+def tukeys_biweight_loss(y_true, y_pred, c=4.685, batch_norm = True, axis = 0):
+    error = y_true - y_pred
+    loss = np.where(np.abs(error) <= c, 0.5 * (1 - (1 - (error / c)**2)**3), 0.5)
+    if batch_norm:
+        return mean_along_axis(loss, axis = axis)
+    else:
+        return np.sum(loss)
+
 def mse_loss_seq(x_pred, x_true, batch_norm = True):
     """x_true is the input sequence of the shape (n_samples, n_timestamps, n_features) and x_pred is the predicted sequence of the shape (n_samples, n_timestamps, n_features). 
     x_true = [x_true_1, x_true_2, ..., x_true_n] while x_pred = [x_pred_1, x_pred_2, ..., x_pred_n]. x_pred_1 is the estimate for x_true_2, x_pred_2 is the estimate for x_true_3 and so on. 
