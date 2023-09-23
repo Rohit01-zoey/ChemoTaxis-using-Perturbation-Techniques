@@ -120,9 +120,9 @@ def get_gradients(cfg, model, data, loss, loss_fn = utils.mse_loss):
                 set_weights(cfg, model_perturbed, weights)
                 #n print(key, index, np.sum(get_weights(cfg, model_perturbed)[key] - unperturbed_weights[key]))
                 #perform the forward propagation step
-                y_perturbed = model_perturbed.forward(data[:,:,3:4])
+                y_perturbed = model_perturbed.forward(data[:,:,3:5])
                 #compute the loss
-                loss_perturbed = loss_fn(y_perturbed[:, :-1, :], data[:, 1:, 6:]*1000) #! utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
+                loss_perturbed = loss_fn(y_perturbed[:, :-1, :], data[:, 1:, 7:]*1000) #! utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
                 #compute the gradient
                 gradient_dict[key][index] = (loss_perturbed - loss) / cfg['training']['perturbation']
                 #after the gradient is computed, reset the weights to the original weights
@@ -134,7 +134,39 @@ def get_gradients(cfg, model, data, loss, loss_fn = utils.mse_loss):
     
     elif cfg['training']['gradient_computation'] == 'bptt':
         #implement backpropagation through time
-        pass
+        num_time_steps = data.shape[1]
+        gradients = {
+            'dWxh': np.zeros_like(model.Wxh),
+            'dWhh': np.zeros_like(model.Whh),
+            'dWhy': np.zeros_like(model.Why),
+            'dbh': np.zeros_like(model.bh),
+            'dby': np.zeros_like(model.by),
+        }
+
+        # Initialize gradient for the hidden state at the last time step
+        dh_next = np.zeros_like(model.hidden_states[:, 0, :])
+
+        # Loop through time steps in reverse order
+        for t in reversed(range(num_time_steps)):
+            # Compute the gradient of the loss with respect to predictions dy
+            dy = model.y[:, t, :] - data[:, t, 7:]
+            
+            # Backpropagate through the output layer
+            gradients['dWhy'] += np.dot(dy.T, model.hidden_states[:, t, :])
+            gradients['dby'] += np.sum(dy, axis=0, keepdims=True)
+            
+            # Backpropagate through the hidden layer
+            dh = np.dot(dy, model.Why.T) + dh_next
+            dhraw = (1 - model.hidden_states[:, t, :]**2) * dh
+            
+            # Accumulate gradients for weights
+            gradients['dWxh'] += np.dot(dhraw.T, data[:, t, 3:5])
+            gradients['dWhh'] += np.dot(dhraw.T, model.hidden_states[:, t - 1, :])
+            gradients['dbh'] += np.sum(dhraw, axis=0, keepdims=True)
+            
+            # Update dh_next for the next time step
+            dh_next = np.dot(dhraw, model.Whh.T)
+        return gradient_dict
     else:
         raise NotImplementedError
     
@@ -260,9 +292,9 @@ def train_chemotaxis(cfg, model, data, lr_schedule, logger, loss_fn = utils.mse_
             pbar = tqdm(dataloader, total=len(dataloader), desc=f"Epoch {iter + 1}/{epochs}", ncols=140)
             total_train_loss = 0
             for batch in pbar:
-                output = model.forward(batch[:, :, 3:4])
-                train_loss = loss_fn(output[:, :-1, :], batch[:, 1:, 6:]*1000, batch_norm=True)
-                total_train_loss += loss_fn(output[:, :-1, :], batch[:, 1:, 6:]*1000, batch_norm=False) # adding the true train loss
+                output = model.forward(batch[:, :, 3:5])
+                train_loss = loss_fn(output[:, :-1, :], batch[:, 1:, 7:]*1000, batch_norm=True)
+                total_train_loss += loss_fn(output[:, :-1, :], batch[:, 1:, 7:]*1000, batch_norm=False) # adding the true train loss
                 gradients = get_gradients(cfg, model, batch, train_loss, loss_fn=loss_fn) # compute the gradients
                 params = optim.update(get_weights(cfg, model), gradients, lr=lr_schedule(iter))
                 set_weights(cfg, model, params)
@@ -270,19 +302,16 @@ def train_chemotaxis(cfg, model, data, lr_schedule, logger, loss_fn = utils.mse_
                 time.sleep(0.01) #sleep for 10ms to avoid tqdm progress bar from freezing 
             total_train_loss /= data['train'].shape[0] # get the actual averaged train loss
         else:
-            output = model.forward(data['train'][:, :, 3:4]) # perform the forward propagation step
-            train_loss = loss_fn(output[:, :-1, :], data['train'][:, 1:, 6:]*1000, batch_norm=True)
+            output = model.forward(data['train'][:, :, 3:5]) # perform the forward propagation step
+            train_loss = loss_fn(output[:, :-1, :], data['train'][:, 1:, 7:]*1000, batch_norm=True)
             gradients = get_gradients(cfg, model, data['train'], train_loss, loss_fn=loss_fn) # compute the gradients
 
-        
-        if iter>10:
-            print(model.Whh)
             
         params = optim.update(get_weights(cfg, model), gradients, lr=lr_schedule(iter))
         set_weights(cfg, model, params)
         
-        output_val = model.forward(data['val'][:, :, 3:4], training=False)
-        val_loss = loss_fn(output_val[:, :-1, :], data['val'][:, 1:, 6:]*1000, batch_norm=True)
+        output_val = model.forward(data['val'][:, :, 3:5], training=False)
+        val_loss = loss_fn(output_val[:, :-1, :], data['val'][:, 1:, 7:]*1000, batch_norm=True)
         if val_loss <= best_val_loss :
             pickle.dump(model, open(root + "best_model.pkl", "wb")) # save the best model
             

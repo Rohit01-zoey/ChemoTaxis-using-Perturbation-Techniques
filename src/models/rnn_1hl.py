@@ -1,4 +1,6 @@
 import numpy as np
+import copy
+
 from metrics import utils
 from modules import dropout
 
@@ -46,13 +48,15 @@ class RNN:
         #perform the forward propagation step through the RNN
         self.h = np.zeros((X.shape[0], self.hidden_nodes)) #the hidden state
         self.h_prev = np.zeros((X.shape[0], self.hidden_nodes)) #the previous hidden state
+        self.hidden_states = np.zeros((X.shape[0], X.shape[1], self.hidden_nodes)) #the hidden states of all the time steps
         self.y = np.zeros((X.shape[0], X.shape[1], self.output_nodes)) #the output state
         self.p = np.zeros((X.shape[0], self.output_nodes)) #the probability distribution of the output state
         self.X = X #the input data
         for t in range(X.shape[1]):
             self.h_prev = self.h
             self.h = np.tanh(np.dot(X[:,t,:], self.Wxh) + np.dot(self.h_prev, self.Whh) + self.bh)
-            self.h = self.dropout.forward(self.h, training = training)
+            self.hidden_states[:, t, :] = copy.deepcopy(self.h)
+            # self.h = self.dropout.forward(self.h, training = training)
             self.y[:, t, :] = np.dot(self.h, self.Why) + self.by #update the output state
         return self.y
 

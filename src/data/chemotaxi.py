@@ -25,7 +25,7 @@ class ChemotaxisDataLoader:
         self.length = min(self.initial_dataset_length)
         self.dataset = {}
         self.dataset['train'] = dataset_loaded[:1, :self.length, :]
-        self.dataset['val'] = dataset_loaded[27:, :self.length, :] 
+        self.dataset['val'] = dataset_loaded[1:, :self.length, :] 
         print("Train Dataset loaded with shape: ", self.dataset['train'].shape)
         print("Validation Dataset loaded with shape: ", self.dataset['val'].shape)
         

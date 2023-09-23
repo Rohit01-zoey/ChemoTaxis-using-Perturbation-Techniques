@@ -21,10 +21,20 @@ class DirectoryExistsWarning(Warning):
 
 dataset = ChemotaxisDataLoader()
 print("Shortening and stacking....")
-dataset.shorten(new_length=50)
+dataset.shorten(new_length=100)
 
 dataset_l = dataset.shortened_dataset
-dataset_loader = DataLoader(dataset_l['train'], labels = None, batch_size=256, shuffle=True)
+dataset_loader = DataLoader(dataset_l['train'], labels = None, batch_size=128, shuffle=True)
+
+# plt.figure()
+# plt.scatter(dataset.dataset['train'][0, :, 1], dataset.dataset['train'][0, :, 2], marker = '.', color = 'r', label = "True")
+# plt.title("True Updates")
+# plt.xticks(rotation=90)
+# plt.xlabel("dx")
+# plt.ylabel("dy")
+# plt.grid(True)
+
+
 print("Shape of the training dataset after shortening: ", dataset_l['train'].shape)
 # lr_schedule = LearnerRateScheduler(cfg['training']['learning_rate'],
 #                                    base_learning_rate=0.1,
@@ -87,15 +97,17 @@ log_file.close() #free up the logger file
 plt.show()
 plt.figure()
 plt.subplot(121)
-plt.scatter(dataset_l['val'][0, :, 6], dataset_l['val'][0, :, 7], marker = '.', color = 'r', label = "True")
-plt.title("True Updates") 
+plt.scatter(dataset_l['val'][0, :, 7], dataset_l['val'][0, :, 8], marker = '.', color = 'r', label = "True")
+plt.title("True Updates")
+plt.xticks(rotation=90)
 plt.xlabel("dx")
 plt.ylabel("dy")
 plt.grid(True)
 plt.subplot(122)
-plt.scatter(rnn_model.forward(dataset_l['val'][0:1, : , 3:4])[0, :, 0], rnn_model.forward(dataset_l['val'][0:1, : , 3:4])[0, :, 1], marker = '.', color = 'b', label = "Predicted")
+plt.scatter((1.0/1000)*rnn_model.forward(dataset_l['val'][0:1, : , 3:5])[0, :, 0], (1.0/1000)*rnn_model.forward(dataset_l['val'][0:1, : , 3:5])[0, :, 1], marker = '.', color = 'b', label = "Predicted")
 plt.title("Predicted Updates")
 plt.xlabel("dx")
+plt.xticks(rotation=90)
 plt.ylabel("dy")
 plt.grid(True)
 plt.show()
