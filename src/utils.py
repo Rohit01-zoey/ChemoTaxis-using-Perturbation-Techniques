@@ -163,11 +163,12 @@ def plot_losses_from_files(file_paths, error_bar = False, shaded_error = True, s
 
     plt.figure(figsize=(10, 6))
 
-    # # Plot individual training and validation losses from each run
-    # for i, file_path in enumerate(file_paths):
-    #     plt.plot(all_epochs, all_train_losses[i], alpha=0.7, label=f'{file_path} - Train Loss', marker='o')
-    #     plt.plot(all_epochs, all_val_losses[i], alpha=0.7, label=f'{file_path} - Val Loss', marker='o')
-
+    # Plot individual training and validation losses from each run
+    for i, file_path in enumerate(file_paths):
+        # plt.plot(all_epochs, all_train_losses[i], alpha=0.7, label=f'{file_path} - Train Loss', marker='o')
+        plt.plot(all_epochs, all_val_losses[i], alpha=0.7, label=f'{file_path} - Val Loss', marker='.')
+        plt.legend()
+    plt.show()
     if error_bar:
         # Plot average training and validation losses with error bars representing the standard deviation
         plt.errorbar(all_epochs, avg_train_losses, yerr=std_train_losses,

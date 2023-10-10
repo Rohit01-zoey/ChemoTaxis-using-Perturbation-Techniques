@@ -103,7 +103,7 @@ def update_model_weights(cfg, model, weight_updates):
     else:
         raise NotImplementedError
     
-def get_gradients(cfg, model, data, loss, loss_fn = utils.mse_loss):
+def get_gradients(cfg, model, data, loss, predictions, loss_fn = utils.mse_loss):
     """Compute the gradients of the model. Returns a ditcionary containing the gradients."""
     if cfg['training']['gradient_computation'] == 'wp':
         #implement weight perturbation
@@ -120,9 +120,9 @@ def get_gradients(cfg, model, data, loss, loss_fn = utils.mse_loss):
                 set_weights(cfg, model_perturbed, weights)
                 #n print(key, index, np.sum(get_weights(cfg, model_perturbed)[key] - unperturbed_weights[key]))
                 #perform the forward propagation step
-                y_perturbed = model_perturbed.forward(data[:,:,3:5])
+                y_perturbed = model_perturbed.forward(data)
                 #compute the loss
-                loss_perturbed = loss_fn(y_perturbed[:, :-1, :], data[:, 1:, 7:]*1000) #! utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
+                loss_perturbed = utils.mse_loss_seq(y_perturbed, data, batch_norm=True)
                 #compute the gradient
                 gradient_dict[key][index] = (loss_perturbed - loss) / cfg['training']['perturbation']
                 #after the gradient is computed, reset the weights to the original weights
@@ -135,37 +135,41 @@ def get_gradients(cfg, model, data, loss, loss_fn = utils.mse_loss):
     elif cfg['training']['gradient_computation'] == 'bptt':
         #implement backpropagation through time
         num_time_steps = data.shape[1]
-        gradients = {
-            'dWxh': np.zeros_like(model.Wxh),
-            'dWhh': np.zeros_like(model.Whh),
-            'dWhy': np.zeros_like(model.Why),
-            'dbh': np.zeros_like(model.bh),
-            'dby': np.zeros_like(model.by),
+        # Initialize gradients
+        dL_dWhy = np.zeros_like(model.Why)
+        dL_dby = np.zeros_like(model.by)
+        dL_dWxh = np.zeros_like(model.Wxh)
+        dL_dWhh = np.zeros_like(model.Whh)
+        dL_dbh = np.zeros_like(model.bh)
+        dL_dy = (2/data.shape[0]) * (predictions[:, 1:-1, :] - data[:, 2:, :])
+        
+        # Initialize gradient for hidden state
+        dL_dh_next = np.zeros((dL_dy.shape[0], model.hidden_nodes))
+        
+        # Backpropagate through time
+        for t in reversed(range(1, num_time_steps - 1)):  # Start from 1, not 2.
+            dy = dL_dy[:, t-1, :]
+            dL_dh = np.dot(dy, model.Why.T) + dL_dh_next
+            
+            dh_raw = (1 - model.hidden_states[:, t, :]**2) * dL_dh
+            
+            dL_dWhy += np.dot(model.hidden_states[:, t, :].T, dy)
+            dL_dby += dy.sum(axis=0, keepdims=True)
+            dL_dWxh += np.dot(data[:, t-1, :].T, dh_raw)  # Use t-1 as input for time step t.
+            dL_dWhh += np.dot(model.hidden_states[:, t-1, :].T, dh_raw)
+            dL_dbh += dh_raw.sum(axis=0, keepdims=True)
+            
+            dL_dh_next = np.dot(dh_raw, model.Whh)
+        
+        # Pack gradients into a dictionary
+        gradient_dict = {
+            'Why': dL_dWhy,
+            'by': dL_dby,
+            'Wxh': dL_dWxh,
+            'Whh': dL_dWhh,
+            'bh': dL_dbh,
         }
-
-        # Initialize gradient for the hidden state at the last time step
-        dh_next = np.zeros_like(model.hidden_states[:, 0, :])
-
-        # Loop through time steps in reverse order
-        for t in reversed(range(num_time_steps)):
-            # Compute the gradient of the loss with respect to predictions dy
-            dy = model.y[:, t, :] - data[:, t, 7:]
-            
-            # Backpropagate through the output layer
-            gradients['dWhy'] += np.dot(dy.T, model.hidden_states[:, t, :])
-            gradients['dby'] += np.sum(dy, axis=0, keepdims=True)
-            
-            # Backpropagate through the hidden layer
-            dh = np.dot(dy, model.Why.T) + dh_next
-            dhraw = (1 - model.hidden_states[:, t, :]**2) * dh
-            
-            # Accumulate gradients for weights
-            gradients['dWxh'] += np.dot(dhraw.T, data[:, t, 3:5])
-            gradients['dWhh'] += np.dot(dhraw.T, model.hidden_states[:, t - 1, :])
-            gradients['dbh'] += np.sum(dhraw, axis=0, keepdims=True)
-            
-            # Update dh_next for the next time step
-            dh_next = np.dot(dhraw, model.Whh.T)
+    
         return gradient_dict
     else:
         raise NotImplementedError
@@ -251,7 +255,7 @@ def train(cfg, model, data, lr_schedule, logger, dataloader = None, wand = None)
         else:
             output = model.forward(data['train']) # perform the forward propagation step
             train_loss = utils.mse_loss_seq(output, data['train'], batch_norm=True)
-            gradients = get_gradients(cfg, model, data['train'], train_loss) # compute the gradients
+            gradients = get_gradients(cfg, model, data['train'], train_loss, output) # compute the gradients
         # if learning_rate == 'auto':
         #     weight_updates = get_weight_updates(cfg, gradients, lr_schedule(iter)) # get the actual updates from the gradients
         # else:

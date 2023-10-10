@@ -78,6 +78,52 @@ class SineWaveLoader:
 
 
 
+
+
+
+class SineWaveDatasetV2():
+    def __init__(self, num_samples= 10, seq_length = 1000, num_periods = 1, frequency_range=2, noise_std=0.01, seed=42):
+        self.num_samples = num_samples
+        self.seq_length = seq_length
+        self.num_periods = num_periods
+        self.frequency_range = frequency_range
+        self.noise_std = noise_std
+        self.seed = seed
+        self.data = {}
+        self.data['data'], self.labels = self._generate_data()
+
+    def _generate_data(self):
+        np.random.seed(self.seed)
+        data = []
+        labels = []
+
+        for _ in range(self.num_samples):
+            phase = np.random.uniform(0, 2 * np.pi)
+            x = np.linspace(phase, self.num_periods * 2 * np.pi + phase, self.seq_length)
+            sine_wave = np.sin(self.frequency_range * x)
+            noisy_wave = sine_wave + np.random.normal(0, self.noise_std, self.seq_length)
+
+            data.append([[noisy_wave[i], (self.frequency_range * x[i]) % (2 * np.pi)] for i in range(self.seq_length)])
+            labels.append([[noisy_wave[i], (self.frequency_range * x[i]) % (2 * np.pi)] for i in range(self.seq_length)]) # Save the phase as labels
+
+        data = np.array(data)
+        labels = np.array(labels)
+        
+        random_perm = np.random.permutation(self.num_samples)
+        train_data = data[random_perm[:int(0.6 * self.num_samples)], :, :]
+        val_data = data[random_perm[int(0.6 * self.num_samples) : int(0.8 * self.num_samples)], :, :]
+        test_data = data[random_perm[int(0.8 * self.num_samples) :], :, :]
+        sine_data_dict = {'train' : train_data, 'val' : val_data, 'test' : test_data}
+
+        return sine_data_dict, labels
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, idx):
+        return self.data['data']['train'][idx], self.labels[idx]
+
+
 # sine_class = SineWaveLoader(60, 100, amplitude=10.0, frequency=10.0)
 # sine_class.load_data(10)
 # import matplotlib.pyplot as plt

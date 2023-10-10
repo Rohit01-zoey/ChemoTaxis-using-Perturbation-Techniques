@@ -59,4 +59,5 @@ class RNN:
             # self.h = self.dropout.forward(self.h, training = training)
             self.y[:, t, :] = np.dot(self.h, self.Why) + self.by #update the output state
         return self.y
+    
 

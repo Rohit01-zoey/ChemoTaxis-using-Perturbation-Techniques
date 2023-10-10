@@ -1,11 +1,11 @@
 model:
   name: 'rnn_1hl'
-  input_size: 2
+  input_size: 1
   hidden_size: 10
-  output_size: 2
+  output_size: 1
 training:
   gradient_computation: 'bptt'  # 'wp' or 'bptt'
-  epochs: 30
+  epochs: 1000
   learning_rate: 'step' #0.00001
   seed: 12
   perturbation: 0.00001
@@ -13,4 +13,5 @@ training:
   max_clip_value: 3
   min_clip_value: -3
 log:
+  log_file: 'src/log_bp.txt'
   experiment_name: 'rnn_1hl on chemotaxis data'
